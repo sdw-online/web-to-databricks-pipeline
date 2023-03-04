@@ -110,26 +110,28 @@ try:
 
     # Read JSON payload into data frame 
     fixtures = response.json()['response']['fixtures']
-    
-    played = fixtures['played']
+    # print(fixtures)
+
     df = pd.json_normalize(fixtures)
 
-    df = pd.concat([df.drop(['played'], axis=1 ), pd.json_normalize(played)], axis=1)
-    
-    wins = fixtures['wins']
-    df = pd.concat([df.drop(['wins'], axis=1 ), pd.json_normalize(wins)], axis=1)
-
-    draws = fixtures['draws']
-    df = pd.concat([df.drop(['draws'], axis=1 ), pd.json_normalize(draws)], axis=1)
-    
-    loses = fixtures['loses']
-    df = pd.concat([df.drop(['loses'], axis=1 ), pd.json_normalize(loses)], axis=1)
-
-
-    local_target_path               =   os.path.abspath('scraper/temp_storage')
-    prem_league_table_file          =   f'prem_league_table_{match_date}.csv'
     print(df)
-    df.to_csv(f'{local_target_path}/{prem_league_table_file}' , index=False)
+
+    # df = pd.concat([df.drop(['played'], axis=1 ), pd.json_normalize(played)], axis=1)
+    
+    # wins = fixtures['wins']
+    # df = pd.concat([df.drop(['wins'], axis=1 ), pd.json_normalize(wins)], axis=1)
+
+    # draws = fixtures['draws']
+    # df = pd.concat([df.drop(['draws'], axis=1 ), pd.json_normalize(draws)], axis=1)
+    
+    # loses = fixtures['loses']
+    # df = pd.concat([df.drop(['loses'], axis=1 ), pd.json_normalize(loses)], axis=1)
+
+
+    local_target_path               =   os.path.abspath('api_caller/temp_storage')
+    team_file                       =   f'team_{match_date}.csv'
+    print(df)
+    df.to_csv(f'{local_target_path}/{team_file}' , index=False)
 
 except Exception as e:
     root_logger.error(e)
