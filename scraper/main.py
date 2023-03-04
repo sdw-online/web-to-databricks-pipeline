@@ -87,12 +87,13 @@ s3_client                                           =       boto3.client('s3', a
 # Specify the constants for the scraper 
 local_target_path               =   os.path.abspath('scraper/temp_storage')
 match_dates                     =   ['2022-Sep-01', '2022-Oct-01', '2022-Nov-01', '2022-Dec-01', '2023-Jan-01', '2023-Feb-01', '2023-Mar-01' ]
-
+table_counter                   =   0
 
 
 # Set up the Selenium Chrome driver 
 options = webdriver.ChromeOptions()
 options.add_argument("--start-maximized")
+options.add_argument("--headless")
 chrome_driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
 
@@ -130,7 +131,7 @@ for match_date in match_dates:
 
         for table_row in table_rows:
             table_row_counter   +=  1
-            root_logger.debug(f'>>>>>>>   Table row no {table_row_counter} <<<<<<  ')
+            root_logger.debug(f'>>>>>>>   Table no {table_counter} <<<<<<  ')
             root_logger.debug(f'>>>>   ')
             cells           =   table_row.find_elements(By.TAG_NAME, 'td')
             row_data        =   []
@@ -167,8 +168,21 @@ for match_date in match_dates:
         root_logger.debug(f'>>>>   ')
 
 
+
         # Add delays to avoid overloading the website's servers 
         sleep(3)
+
+
+
+        # # List the objects in the S3 bucket
+        # s3_objects = s3_client.list_objects_v2(S3_BUCKET, S3_FOLDER)['Contents']
+        # s3_objects_sorted = sorted(s3_objects, key=lambda object: object['LastModified'])
+
+        # root_logger.debug('Objects in S3 sub-folder:')
+        # for object in s3_objects_sorted:
+        #     root_logger.debug(object['Key'], object['LastModified'])
+        #     root_logger.debug('')
+
 
     except Exception as e:
         root_logger.debug(e)
