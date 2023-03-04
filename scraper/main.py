@@ -21,12 +21,13 @@ try:
     close_cookie_box = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[8]/div[2]/div[1]/div[1]/button/i')))
     close_cookie_box.click()
 
-    
-    tr_element = chrome_driver.find_element(By.XPATH, '//*[@id="maincontent"]/table//*/tr[2]')
-    td_elements = chrome_driver.find_element(By.TAG_NAME, 'td')
+    table = chrome_driver.find_element(By.CLASS_NAME, 'leaguetable')
+    rows = table.find_elements(By.XPATH, './/tr')
 
-    for td in td_elements:
-        print(f'Content: {td}')
+    for row in rows:
+        cells = row.find_elements(By.XPATH, './/td')
+        for cell in cells:
+            print(cell.text)
 
     sleep(600)
 
