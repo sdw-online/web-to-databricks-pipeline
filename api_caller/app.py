@@ -85,16 +85,20 @@ s3_client                                           =       boto3.client('s3', a
 
 # Set up other constants
 
-API_KEY             =       os.getenv("API_KEY")
-API_HOST            =       os.getenv("API_HOST")
-league_id           =       os.getenv("LEAGUE_ID")
-season              =       os.getenv("SEASON")
-team_id             =       os.getenv("TEAM_ID")
-match_date          =       '2022-10-10'
+API_KEY                         =       os.getenv("API_KEY")
+API_HOST                        =       os.getenv("API_HOST")
+league_id                       =       os.getenv("LEAGUE_ID")
+season                          =       os.getenv("SEASON")
+team_id                         =       os.getenv("TEAM_ID")
+local_target_path               =       os.path.abspath('api_caller/temp_storage')
+match_date                      =       '2022-10-10'
 
-teams_url           =       f"https://api-football-v1.p.rapidapi.com/v3/teams/statistics?league={league_id}&team={team_id}&season={season}&date={match_date}"
-headers             =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
-query_string        =       {'league': league_id, 'season': season, 'team': team_id}
+
+
+teams_url                       =       f"https://api-football-v1.p.rapidapi.com/v3/teams/statistics?league={league_id}&team={team_id}&season={season}&date={match_date}"
+headers                         =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
+query_string                    =       {'league': league_id, 'season': season, 'team': team_id}
+team_file                       =       f'team_{match_date}.csv'
 
 
 
@@ -105,32 +109,15 @@ try:
 
     # Display the response in a readable JSON format
     response_json = json.dumps(response.json(), indent=4)
-    # root_logger.debug(response_json)
 
 
     # Read JSON payload into data frame 
     fixtures = response.json()['response']['fixtures']
-    # print(fixtures)
-
     df = pd.json_normalize(fixtures)
-
     print(df)
 
-    # df = pd.concat([df.drop(['played'], axis=1 ), pd.json_normalize(played)], axis=1)
-    
-    # wins = fixtures['wins']
-    # df = pd.concat([df.drop(['wins'], axis=1 ), pd.json_normalize(wins)], axis=1)
 
-    # draws = fixtures['draws']
-    # df = pd.concat([df.drop(['draws'], axis=1 ), pd.json_normalize(draws)], axis=1)
-    
-    # loses = fixtures['loses']
-    # df = pd.concat([df.drop(['loses'], axis=1 ), pd.json_normalize(loses)], axis=1)
-
-
-    local_target_path               =   os.path.abspath('api_caller/temp_storage')
-    team_file                       =   f'team_{match_date}.csv'
-    print(df)
+    # Write data frame to CSV file
     df.to_csv(f'{local_target_path}/{team_file}' , index=False)
 
 except Exception as e:
