@@ -91,37 +91,65 @@ league_id                       =       os.getenv("LEAGUE_ID")
 season                          =       os.getenv("SEASON")
 team_id                         =       os.getenv("TEAM_ID")
 local_target_path               =       os.path.abspath('api_caller/temp_storage')
-match_date                      =       '2022-10-10'
-
-
-
-teams_url                       =       f"https://api-football-v1.p.rapidapi.com/v3/teams/statistics?league={league_id}&team={team_id}&season={season}&date={match_date}"
+match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01']
 headers                         =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
 query_string                    =       {'league': league_id, 'season': season, 'team': team_id}
-team_file                       =       f'team_{match_date}.csv'
 
 
 
+for match_date in match_dates:
+    
+    try:
 
-# Send HTTP request for football data to Rapid-API endpoint
-try:
-    response        = requests.request("GET", teams_url, headers=headers, params=query_string)
+        # Send HTTP request for football data to Rapid-API endpoint
+        teams_url                                       =       f"https://api-football-v1.p.rapidapi.com/v3/teams/statistics?league={league_id}&team={team_id}&season={season}&date={match_date}"
+        team_file                                       =       f'team_{match_date}.csv'
+        S3_KEY                                          =       S3_FOLDER + team_file
+        CSV_BUFFER                                      =       io.StringIO()
 
-    # Display the response in a readable JSON format
-    response_json = json.dumps(response.json(), indent=4)
+        
+        root_logger.info(f'>>>>   Sending HTTP GET requests to API endpoint for team profile as of {match_date} ...')
+        root_logger.debug(f'>>>>   ')
+        response                        =       requests.request("GET", teams_url, headers=headers, params=query_string)
+
+        # Display the response in a readable JSON format
+        root_logger.info(f'>>>>   Requests completed, now processing JSON payload ...')
+        root_logger.debug(f'>>>>   ')
+        response_json = json.dumps(response.json(), indent=4)
 
 
-    # Read JSON payload into data frame 
-    fixtures = response.json()['response']['fixtures']
-    df = pd.json_normalize(fixtures)
-    print(df)
+        # Read JSON payload into data frame 
+        root_logger.info(f'>>>>   Reading JSON payload into data frame ...')
+        root_logger.debug(f'>>>>   ')
+        fixtures = response.json()['response']['fixtures']
+        df = pd.json_normalize(fixtures)
+        print(df)
 
 
-    # Write data frame to CSV file
-    df.to_csv(f'{local_target_path}/{team_file}' , index=False)
+        # Write data frame to CSV file
+        root_logger.info(f'>>>>   Writing data frame to CSV file ...')
+        root_logger.debug(f'>>>>   ')
+        df.to_csv(CSV_BUFFER , index=False)
+        RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
 
-except Exception as e:
-    root_logger.error(e)
+        # Load Postgres table to S3
+        s3_client.put_object(Bucket=S3_BUCKET,
+                    Key=S3_KEY,
+                    Body=RAW_TABLE_ROWS_AS_STRING_VALUES
+                    )
+        root_logger.info(f'>>>>   Successfully written and loaded "{team_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
+        root_logger.debug(f'>>>>   ')
+        root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+        root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+        root_logger.debug(f' ')
+
+
+
+        # Add delays to avoid overloading the website's servers 
+        sleep(3)
+
+    except Exception as e:
+        root_logger.error(e)
 
 
 
