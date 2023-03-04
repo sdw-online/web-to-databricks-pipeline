@@ -93,14 +93,16 @@ teams_url           =       os.getenv("TEAMS_URL")
 session             =       requests.Session()
 league_id           =       '39'
 season              =       '2023'
-team_id             =       '23'
+team_id             =       '33'
 
 
 headers             =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
 query_string        =       {'league': league_id, 'season': season, 'team': team_id}
 
 
-response = requests.get(teams_url, headers, query_string)
+# response = requests.get(teams_url, headers, query_string)
+response = requests.request("GET", teams_url, headers=headers, params=query_string)
 
 
-root_logger.debug(response.json)
+# root_logger.debug(response.json)
+root_logger.debug(response.text)
