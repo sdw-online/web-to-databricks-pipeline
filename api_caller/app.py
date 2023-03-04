@@ -1,8 +1,8 @@
-import requests
-
 import io
 import os
+import json
 import boto3
+import requests
 import pandas as pd
 from time import sleep
 from pathlib import Path
@@ -85,24 +85,55 @@ s3_client                                           =       boto3.client('s3', a
 
 # Set up other constants
 
-
-
 API_KEY             =       os.getenv("API_KEY")
 API_HOST            =       os.getenv("API_HOST")
-teams_url           =       os.getenv("TEAMS_URL")
-session             =       requests.Session()
-league_id           =       '39'
-season              =       '2023'
-team_id             =       '33'
+league_id           =       os.getenv("LEAGUE_ID")
+season              =       os.getenv("SEASON")
+team_id             =       os.getenv("TEAM_ID")
+match_date          =       '2022-10-10'
 
-
+teams_url           =       f"https://api-football-v1.p.rapidapi.com/v3/teams/statistics?league={league_id}&team={team_id}&season={season}&date={match_date}"
 headers             =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
 query_string        =       {'league': league_id, 'season': season, 'team': team_id}
 
 
-# response = requests.get(teams_url, headers, query_string)
-response = requests.request("GET", teams_url, headers=headers, params=query_string)
 
 
-# root_logger.debug(response.json)
-root_logger.debug(response.text)
+# Send HTTP request for football data to Rapid-API endpoint
+try:
+    response        = requests.request("GET", teams_url, headers=headers, params=query_string)
+
+    # Display the response in a readable JSON format
+    response_json = json.dumps(response.json(), indent=4)
+    # root_logger.debug(response_json)
+
+
+    # Read JSON payload into data frame 
+    fixtures = response.json()['response']['fixtures']
+    
+    played = fixtures['played']
+    df = pd.json_normalize(fixtures)
+
+    df = pd.concat([df.drop(['played'], axis=1 ), pd.json_normalize(played)], axis=1)
+    
+    wins = fixtures['wins']
+    df = pd.concat([df.drop(['wins'], axis=1 ), pd.json_normalize(wins)], axis=1)
+
+    draws = fixtures['draws']
+    df = pd.concat([df.drop(['draws'], axis=1 ), pd.json_normalize(draws)], axis=1)
+    
+    loses = fixtures['loses']
+    df = pd.concat([df.drop(['loses'], axis=1 ), pd.json_normalize(loses)], axis=1)
+
+
+    local_target_path               =   os.path.abspath('scraper/temp_storage')
+    prem_league_table_file          =   f'prem_league_table_{match_date}.csv'
+    print(df)
+    df.to_csv(f'{local_target_path}/{prem_league_table_file}' , index=False)
+
+except Exception as e:
+    root_logger.error(e)
+
+
+
+
