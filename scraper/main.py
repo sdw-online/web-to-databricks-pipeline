@@ -15,6 +15,8 @@ prem_league_table_url = 'https://www.twtd.co.uk/league-tables/competition:premie
 target_path    =   os.path.abspath('scraper/temp_storage')
 
 
+match_weeks = [week_no for week_no in range(1, 39)]
+match_week_date = []
 
 options = webdriver.ChromeOptions()
 options.add_argument("--start-maximized")
@@ -30,13 +32,13 @@ try:
 
 
     table = chrome_driver.find_element(By.CLASS_NAME, 'leaguetable')
-    rows = table.find_elements(By.XPATH, './/tr')
+    table_rows = table.find_elements(By.XPATH, './/tr')
     scraped_content = []
 
 
 
-    for row in rows:
-        cells = row.find_elements(By.TAG_NAME, 'td')
+    for table_row in table_rows:
+        cells = table_row.find_elements(By.TAG_NAME, 'td')
         row_data = []
         for cell in cells:
             row_data.append(cell.text)
