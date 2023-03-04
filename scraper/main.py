@@ -21,32 +21,45 @@ chrome_driver = webdriver.Chrome(ChromeDriverManager().install(), options=option
 for match_date in match_dates:
     try:
         prem_league_table_url   = f'https://www.twtd.co.uk/league-tables/competition:premier-league/daterange/fromdate:2022-Jul-01/todate:{match_date}/type:home-and-away/'
-
         chrome_driver.get(prem_league_table_url)
+        print(f'>>>> Running Prem League link for {match_date}...')
+        print(f'>>>> ')
         try:
             wait = WebDriverWait(chrome_driver, 5)
             close_cookie_box = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[8]/div[2]/div[1]/div[1]/button/i')))
             close_cookie_box.click()
+            print(f'>>>> Closing cookie box...')
+            print(f'>>>> ')
         except Exception as e:
-            continue
+            print('No cookie box to close...let\'s continue scraping!!')
 
         table = chrome_driver.find_element(By.CLASS_NAME, 'leaguetable')
         table_rows = table.find_elements(By.XPATH, './/tr')
         scraped_content = []
+        print(f'>>>> Extracting content from HTML elements... {match_date}...')
+        print(f'>>>> ')
 
         for table_row in table_rows:
             cells = table_row.find_elements(By.TAG_NAME, 'td')
             row_data = []
+            cell_counter = 0
             for cell in cells:
+                cell_counter += 1
                 row_data.append(cell.text)
+                print(f'>>>> Cell no {cell_counter} appended ...')
+                print(f'>>>> ')
             scraped_content.append(row_data)
 
         prem_league_table_df = pd.DataFrame(data=scraped_content[1:], columns=[scraped_content[0]])
 
         print(prem_league_table_df)
         prem_league_table_df.to_csv(f'{target_path}/prem_league_table_{match_date}.csv', index=False)
+        print(f'>>>> Successfully written "{target_path}/prem_league_table_{match_date}.csv" to target location... {match_date}...')
+        print(f'>>>> ')
 
-        # sleep(600)
+
+        # Add delays to avoid overloading the website's servers 
+        sleep(3)
 
     except Exception as e:
         print(e)
