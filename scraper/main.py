@@ -6,28 +6,47 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
+import pandas as pd
+import os
 
 
+prem_league_table_url = 'https://www.twtd.co.uk/league-tables/competition:premier-league/daterange/fromdate:2022-Jul-01/todate:2023-Jan-01/type:home-and-away/'
 
-url = 'https://www.twtd.co.uk/league-tables/competition:premier-league/daterange/fromdate:2022-Jul-01/todate:2023-Jan-01/type:home-and-away/'
+target_path    =   os.path.abspath('scraper/temp_storage')
+
+
 
 options = webdriver.ChromeOptions()
 options.add_argument("--start-maximized")
 chrome_driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
+
 try:
-    chrome_driver.get(url)
+    chrome_driver.get(prem_league_table_url)
     wait = WebDriverWait(chrome_driver, 5)
-    close_cookie_box = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[8]/div[2]/div[1]/div[1]/button/i')))
+    close_cookie_box = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[8]/div[2]/div[1]/div[1]/button/i')))
     close_cookie_box.click()
+
+
 
     table = chrome_driver.find_element(By.CLASS_NAME, 'leaguetable')
     rows = table.find_elements(By.XPATH, './/tr')
+    scraped_content = []
+
+
 
     for row in rows:
-        cells = row.find_elements(By.XPATH, './/td')
+        cells = row.find_elements(By.TAG_NAME, 'td')
+        row_data = []
         for cell in cells:
-            print(cell.text)
+            row_data.append(cell.text)
+        scraped_content.append(row_data)
+
+    df = pd.DataFrame(data=scraped_content[1:], columns=[scraped_content[0]])
+
+    print(df)
+    df.to_csv(f'{target_path}/prem_league_table.csv', index=False)
+
 
     sleep(600)
 
