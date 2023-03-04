@@ -1,0 +1,9 @@
+name: web-to-databricks-pipeline
+channels: 
+- conda-forge
+dependencies:
+- python=3.10
+- pandas
+- psycopg2
+- selenium
+- boto3
