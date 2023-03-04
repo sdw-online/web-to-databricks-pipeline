@@ -34,11 +34,12 @@ s3_response = s3_client.list_buckets()
 print(s3_response['Buckets'])
 
 
-if S3_BUCKET not in [bucket['Name'] for bucket in s3_response['Buckets']]:
-    s3_client.create_bucket(Bucket=S3_BUCKET, ACL='None')
+try:
+    s3_client.create_bucket(Bucket=S3_BUCKET)
     print(f'Successfully created "{S3_BUCKET}" bucket in AWS S3.')
-else:
-    print(f'The "{S3_BUCKET}" bucket already exists ...  ')
+except Exception as e:
+    print(e)
+    # print(f'The "{S3_BUCKET}" bucket already exists ...  ')
 
 
 # Specify the constants for the scraper 
