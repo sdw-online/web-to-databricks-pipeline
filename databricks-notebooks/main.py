@@ -49,6 +49,8 @@ football_data_path_src = f"{mount_point}/s3/"
 football_data_path_dbfs_tgt = f"/mnt/delta/"
 football_data_path_s3_tgt = f"{mount_point}/delta/"
 
+checkpoint_location = f"{football_data_path_dbfs_tgt}/checkpoint"
+
 # COMMAND ----------
 
 # List the objects in the DBFS mount point 
@@ -61,10 +63,13 @@ football_data_path_s3_tgt = f"{mount_point}/delta/"
 # MAGIC 
 # MAGIC ## Bronze zone
 # MAGIC * Specify schema --- [x]
-# MAGIC * Ingest CSV file into dataframe  --- []
-# MAGIC * Convert dataframe into delta file and write to DBFS  --- [] 
+# MAGIC * Ingest CSV file into dataframe  --- [x]
+# MAGIC * Convert dataframe into delta file and write to DBFS  --- [x] 
 # MAGIC * Read delta file into structured streaming dataframe  --- []
+# MAGIC 
+# MAGIC ### Streaming Query
 # MAGIC * Trigger query to execute only when new files are dumped into the source directory (i.e. `trigger(once=True)`)  --- []
+# MAGIC * Switch on the CDC mechanism (by setting `ignoreChanges`=`False`)
 # MAGIC * Add checkpoint files to record last state of streaming query output before query shuts down (using `checkpointLocation`)  --- []
 # MAGIC * Include schema enforcement (i.e. `enforceSchema=True`)  --- []
 # MAGIC * Write streaming query output to `bronze_folder` in the `delta_folder` of the S3 bucket as a delta table ("bronze_table")  --- []
@@ -127,10 +132,38 @@ display(df)
 
 # COMMAND ----------
 
-df.write
+(df.write
     .format("delta")
     .mode("overwrite")
-    .save(f"{football_data_path_dbfs_tgt}/prem_league_table_2022-Nov-01-delta_tbl")
+    .save(f"{football_data_path_dbfs_tgt}/prem_league_table_2022-Nov-01-delta_tbl"))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Read delta file into structured streaming dataframe 
+
+# COMMAND ----------
+
+df = (spark.readStream
+             .format("delta")
+             .load(f"{football_data_path_dbfs_tgt}/prem_league_table_2022-Nov-01-delta_tbl") 
+               )
+
+# COMMAND ----------
+
+bronze_streaming_query = (df
+                          .writeStream
+                          .format("delta")
+                          .option("checkpointLocation", checkpoint_location)
+                          .option("ignoreChanges", False)
+                          .option("mergeSchema", False)
+                          .option("enforceSchema", True)
+                          .queryName("BRONZE_STREAMING_QUERY_FB_01")
+                          .outputMode("append")
+                          .trigger(once=True)
+                          
+                         )
 
 # COMMAND ----------
 
