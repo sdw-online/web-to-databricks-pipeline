@@ -11,14 +11,14 @@
 # MAGIC ### Bronze zone
 # MAGIC * Specify schema
 # MAGIC * Ingest CSV file into dataframe
-# MAGIC * Convert dataframe into delta file 
-# MAGIC * Save delta file to folder in S3 bucket 
+# MAGIC * Convert dataframe into delta file and write to DBFS 
 # MAGIC * Read delta file into structured streaming dataframe
 # MAGIC * Trigger query to execute only when new files are dumped into the source directory (i.e. `trigger(once=True)`)
 # MAGIC * Add checkpoint files to record last state of streaming query output before query shuts down (using `checkpointLocation`)
 # MAGIC * Include schema enforcement (i.e. `enforceSchema=True`)
 # MAGIC * Write streaming query output to `bronze_folder` in the `delta_folder` of the S3 bucket as a delta table ("bronze_table")
 # MAGIC * Convert the bronze_table to temp view for data profiling analysis
+# MAGIC * Copy the delta files from DBFS to AWS S3 
 # MAGIC 
 # MAGIC 
 # MAGIC ### Silver zone
@@ -60,16 +60,16 @@ football_data_path_s3_tgt = f"{mount_point}/delta/"
 # MAGIC 
 # MAGIC 
 # MAGIC ## Bronze zone
-# MAGIC * Specify schema
-# MAGIC * Ingest CSV file into dataframe
-# MAGIC * Convert dataframe into delta file and write to DBFS 
-# MAGIC * Read delta file into structured streaming dataframe
-# MAGIC * Trigger query to execute only when new files are dumped into the source directory (i.e. `trigger(once=True)`)
-# MAGIC * Add checkpoint files to record last state of streaming query output before query shuts down (using `checkpointLocation`)
-# MAGIC * Include schema enforcement (i.e. `enforceSchema=True`)
-# MAGIC * Write streaming query output to `bronze_folder` in the `delta_folder` of the S3 bucket as a delta table ("bronze_table")
-# MAGIC * Convert the bronze_table to temp view for data profiling analysis
-# MAGIC * Copy the delta files from DBFS to AWS S3 
+# MAGIC * Specify schema --- [x]
+# MAGIC * Ingest CSV file into dataframe  --- []
+# MAGIC * Convert dataframe into delta file and write to DBFS  --- [] 
+# MAGIC * Read delta file into structured streaming dataframe  --- []
+# MAGIC * Trigger query to execute only when new files are dumped into the source directory (i.e. `trigger(once=True)`)  --- []
+# MAGIC * Add checkpoint files to record last state of streaming query output before query shuts down (using `checkpointLocation`)  --- []
+# MAGIC * Include schema enforcement (i.e. `enforceSchema=True`)  --- []
+# MAGIC * Write streaming query output to `bronze_folder` in the `delta_folder` of the S3 bucket as a delta table ("bronze_table")  --- []
+# MAGIC * Convert the bronze_table to temp view for data profiling analysis  --- []
+# MAGIC * Copy the delta files from DBFS to AWS S3  --- [] 
 
 # COMMAND ----------
 
