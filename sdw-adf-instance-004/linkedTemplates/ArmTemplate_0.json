@@ -1,0 +1,819 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "sdw-adf-instance-004"
+		},
+		"azure_blob_storage_linked_service_tgt_001_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'azure_blob_storage_linked_service_tgt_001'"
+		},
+		"s3_linked_service_src_001_secretAccessKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'secretAccessKey' of 's3_linked_service_src_001'"
+		},
+		"s3_linked_service_src_001_properties_typeProperties_accessKeyId": {
+			"type": "string",
+			"defaultValue": "AKIAYKUDG5KBX5CSDZXW"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/azure_blob_storage_linked_service_tgt_001')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('azure_blob_storage_linked_service_tgt_001_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/s3_linked_service_src_001')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AmazonS3",
+				"typeProperties": {
+					"serviceUrl": "https://s3.amazonaws.com",
+					"accessKeyId": "[parameters('s3_linked_service_src_001_properties_typeProperties_accessKeyId')]",
+					"secretAccessKey": {
+						"type": "SecureString",
+						"value": "[parameters('s3_linked_service_src_001_secretAccessKey')]"
+					},
+					"authenticationType": "AccessKey"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/prem_league_table_2022_Dec_01_src')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "s3_linked_service_src_001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AmazonS3Location",
+						"bucketName": "football-cloud-data-sdw-001",
+						"folderPath": "s3",
+						"fileName": "prem_league_table_2022-Dec-01.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Pos",
+						"type": "String"
+					},
+					{
+						"name": "Team",
+						"type": "String"
+					},
+					{
+						"name": "P",
+						"type": "String"
+					},
+					{
+						"name": "Prop_3",
+						"type": "String"
+					},
+					{
+						"name": "W4",
+						"type": "String"
+					},
+					{
+						"name": "D5",
+						"type": "String"
+					},
+					{
+						"name": "L6",
+						"type": "String"
+					},
+					{
+						"name": "GF7",
+						"type": "String"
+					},
+					{
+						"name": "GA8",
+						"type": "String"
+					},
+					{
+						"name": "Prop_9",
+						"type": "String"
+					},
+					{
+						"name": "W10",
+						"type": "String"
+					},
+					{
+						"name": "D11",
+						"type": "String"
+					},
+					{
+						"name": "L12",
+						"type": "String"
+					},
+					{
+						"name": "GF13",
+						"type": "String"
+					},
+					{
+						"name": "GA14",
+						"type": "String"
+					},
+					{
+						"name": "Prop_15",
+						"type": "String"
+					},
+					{
+						"name": "GD",
+						"type": "String"
+					},
+					{
+						"name": "Pts",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/s3_linked_service_src_001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/prem_league_table_2022_Dec_01_tgt')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "azure_blob_storage_linked_service_tgt_001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "football-data"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/azure_blob_storage_linked_service_tgt_001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/prem_league_table_2022_Nov_01_src')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "s3_linked_service_src_001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AmazonS3Location",
+						"bucketName": "football-cloud-data-sdw-001",
+						"folderPath": "s3",
+						"fileName": "prem_league_table_2022-Nov-01.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/s3_linked_service_src_001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/prem_league_table_2022_Nov_01_tgt')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "azure_blob_storage_linked_service_tgt_001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "football-data"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/azure_blob_storage_linked_service_tgt_001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/prem_league_table_2022_Oct_01_src')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "s3_linked_service_src_001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AmazonS3Location",
+						"bucketName": "football-cloud-data-sdw-001",
+						"folderPath": "s3",
+						"fileName": "prem_league_table_2022-Oct-01.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/s3_linked_service_src_001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/prem_league_table_2022_Oct_01_tgt')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "azure_blob_storage_linked_service_tgt_001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "football-data"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/azure_blob_storage_linked_service_tgt_001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/prem_league_table_2022_Sep_01_src')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "s3_linked_service_src_001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AmazonS3Location",
+						"bucketName": "football-cloud-data-sdw-001",
+						"folderPath": "s3",
+						"fileName": "prem_league_table_2022-Sep-01.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/s3_linked_service_src_001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/prem_league_table_2022_Sep_01_tgt')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "azure_blob_storage_linked_service_tgt_001",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "football-data"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/azure_blob_storage_linked_service_tgt_001')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/s3_to_blob_pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "copy_prem_league_oct_22_data_to_blob",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AmazonS3ReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Pos",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Pos",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Team",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Team",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "P",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "P",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Prop_3",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Prop_3",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "W4",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "W4",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "D5",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "D5",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "L6",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "L6",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "GF7",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "GF7",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "GA8",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "GA8",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Prop_9",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Prop_9",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "W10",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "W10",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "D11",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "D11",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "L12",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "L12",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "GF13",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "GF13",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "GA14",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "GA14",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Prop_15",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Prop_15",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "GD",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "GD",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Pts",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Pts",
+											"type": "String",
+											"physicalType": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "prem_league_table_2022_Oct_01_src",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "prem_league_table_2022_Oct_01_tgt",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-06T10:18:50Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/prem_league_table_2022_Oct_01_src')]",
+				"[concat(variables('factoryId'), '/datasets/prem_league_table_2022_Oct_01_tgt')]"
+			]
+		}
+	]
+}

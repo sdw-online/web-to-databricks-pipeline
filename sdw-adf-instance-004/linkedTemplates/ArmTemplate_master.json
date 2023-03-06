@@ -1,0 +1,63 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "sdw-adf-instance-004"
+		},
+		"azure_blob_storage_linked_service_tgt_001_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'azure_blob_storage_linked_service_tgt_001'"
+		},
+		"s3_linked_service_src_001_secretAccessKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'secretAccessKey' of 's3_linked_service_src_001'"
+		},
+		"s3_linked_service_src_001_properties_typeProperties_accessKeyId": {
+			"type": "string",
+			"defaultValue": "AKIAYKUDG5KBX5CSDZXW"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "sdw-adf-instance-004_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"azure_blob_storage_linked_service_tgt_001_connectionString": {
+						"value": "[parameters('azure_blob_storage_linked_service_tgt_001_connectionString')]"
+					},
+					"s3_linked_service_src_001_secretAccessKey": {
+						"value": "[parameters('s3_linked_service_src_001_secretAccessKey')]"
+					},
+					"s3_linked_service_src_001_properties_typeProperties_accessKeyId": {
+						"value": "[parameters('s3_linked_service_src_001_properties_typeProperties_accessKeyId')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
