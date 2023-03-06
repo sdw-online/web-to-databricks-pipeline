@@ -53,6 +53,10 @@ checkpoint_location = f"{football_data_path_dbfs_tgt}/checkpoint"
 
 # COMMAND ----------
 
+
+
+# COMMAND ----------
+
 # List the objects in the DBFS mount point 
 # dbutils.fs.ls(f"{football_data_path_src}")
 
@@ -162,9 +166,16 @@ bronze_streaming_query = (df
                           .queryName("BRONZE_STREAMING_QUERY_FB_01")
                           .outputMode("append")
                           .trigger(once=True)
-                          
+                          .toTable("bronze_table") 
                          )
 
 # COMMAND ----------
 
-# dbutils.fs.unmount(f"/mnt/{mount_name}")
+# MAGIC %md
+# MAGIC 
+# MAGIC ### List the objects in the Delta folder in DBFS
+
+# COMMAND ----------
+
+# List the objects in the DBFS mount point where the Delta files reside
+dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
