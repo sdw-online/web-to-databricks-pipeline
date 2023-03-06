@@ -66,7 +66,7 @@ dbutils.fs.rm(checkpoint_location, True)
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC DROP TABLE IF EXISTS sandbox_env.bronze_tbl
+# MAGIC DROP TABLE IF EXISTS football_db.bronze_tbl
 
 # COMMAND ----------
 
@@ -129,7 +129,7 @@ league_table_schema = StructType([
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC CREATE DATABASE IF NOT EXISTS sandbox_env
+# MAGIC CREATE DATABASE IF NOT EXISTS football_db
 
 # COMMAND ----------
 
@@ -163,7 +163,7 @@ bronze_streaming_query = (src_query
                           .queryName("BRONZE_QUERY_LEAGUE_STANDINGS_01")
                           .outputMode("append")
                           .trigger(once=True)
-                          .toTable("sandbox_env.bronze_tbl") 
+                          .toTable("football_db.bronze_tbl") 
                          )
 
 # COMMAND ----------
@@ -187,15 +187,15 @@ dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
 
 # MAGIC %sql 
 # MAGIC 
-# MAGIC DESCRIBE HISTORY sandbox_env.bronze_tbl
+# MAGIC DESCRIBE HISTORY football_db.bronze_tbl
 # MAGIC 
-# MAGIC -- select * from sandbox_env.bronze_tbl version as of 1
+# MAGIC -- select * from football_db.bronze_tbl version as of 1
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC select * from sandbox_env.bronze_tbl
+# MAGIC select * from football_db.bronze_tbl
 
 # COMMAND ----------
 
