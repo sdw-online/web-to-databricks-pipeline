@@ -21,7 +21,6 @@ sas_connection_string          =    dbutils.secrets.get(scope="azure", key="sas_
 blob_service_sas_url           =    dbutils.secrets.get(scope="azure", key="blob_service_sas_url")
 
 
-
 source_path = f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net"
 mount_point = f"/mnt/{container_name}-dbfs"
 extra_configs = {
