@@ -60,7 +60,7 @@ checkpoint_location = f"{football_data_path_dbfs_tgt}/checkpoint"
 # COMMAND ----------
 
 # Delete checkpoint location
-dbutils.fs.rm(checkpoint_location, True)
+# dbutils.fs.rm(checkpoint_location, True)
 
 # COMMAND ----------
 
@@ -116,54 +116,18 @@ league_table_schema = StructType([
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Ingest CSV file into dataframe
-
-# COMMAND ----------
-
-df = (spark.read
-        .format("csv")
-        .option("header", "true")
-        .option("inferSchema", "false")
-        .schema(league_table_schema)
-        .load(f"{football_data_path_src}/prem_league_table_2022-Sep-01.csv"))
-
-# COMMAND ----------
-
-display(df)
-
-# COMMAND ----------
-
-df.printSchema()
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC ### Convert dataframe into delta file and write to DBFS 
-
-# COMMAND ----------
-
-(df.write
-    .format("delta")
-    .mode("overwrite")
-    .save(f"{football_data_path_dbfs_tgt}/prem_league_table_2022-Sep-01-delta_tbl"))
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC ### Read delta file into structured streaming dataframe 
+# MAGIC ### Ingest CSV file into streaming dataframe
 
 # COMMAND ----------
 
 src_query = (spark.readStream
-             .format("delta")
-             .load(f"{football_data_path_dbfs_tgt}/prem_league_table_2022-Sep-01-delta_tbl") 
-               )
-
-# COMMAND ----------
-
-# display(src_query)
+        .format("csv")
+        .option("header", "true")
+        .option("inferSchema", "false")
+        .schema(league_table_schema)
+        .option("maxFilesPerTrigger", 2)
+        .load(football_data_path_src)
+     )
 
 # COMMAND ----------
 
@@ -190,3 +154,13 @@ bronze_streaming_query = (src_query
 
 # List the objects in the DBFS mount point where the Delta files reside
 dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC 
+# MAGIC ## Silver zone
+# MAGIC * xxxxxxxxx --- [ ]
+# MAGIC * xxxxxxxxx --- [ ]
+# MAGIC * xxxxxxxxx --- [ ]
