@@ -108,9 +108,22 @@ league_table_schema = StructType([
     StructField("GF.1", IntegerType(), True),
     StructField("GA.1", IntegerType(), True),
     StructField("GD", IntegerType(), True),
-    StructField("Pts", IntegerType(), True)
+    StructField("Pts", IntegerType(), True),
+    StructField("match-date", StringType(), True)
     
 ])
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Add sandbox database
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC CREATE DATABASE IF NOT EXISTS sandbox_env
 
 # COMMAND ----------
 
@@ -124,8 +137,8 @@ src_query = (spark.readStream
         .format("csv")
         .option("header", "true")
         .option("inferSchema", "false")
-        .schema(league_table_schema)
         .option("maxFilesPerTrigger", 2)
+        .schema(league_table_schema)
         .load(football_data_path_src)
      )
 
@@ -159,8 +172,30 @@ dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
 
 # MAGIC %md
 # MAGIC 
+# MAGIC ### Analyze the streaing results in temp views  
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC DESCRIBE HISTORY sandbox_env.bronze_tbl
+# MAGIC 
+# MAGIC -- select * from sandbox_env.bronze_tbl version as of 1
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
 # MAGIC 
 # MAGIC ## Silver zone
 # MAGIC * xxxxxxxxx --- [ ]
 # MAGIC * xxxxxxxxx --- [ ]
 # MAGIC * xxxxxxxxx --- [ ]
+
+# COMMAND ----------
+
+
