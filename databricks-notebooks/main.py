@@ -60,7 +60,13 @@ checkpoint_location = f"{football_data_path_dbfs_tgt}/checkpoint"
 # COMMAND ----------
 
 # Delete checkpoint location
-# dbutils.fs.rm(checkpoint_location, True)
+dbutils.fs.rm(checkpoint_location, True)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC DROP TABLE IF EXISTS sandbox_env.bronze_tbl
 
 # COMMAND ----------
 
@@ -90,7 +96,7 @@ checkpoint_location = f"{football_data_path_dbfs_tgt}/checkpoint"
 
 # COMMAND ----------
 
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType
 
 league_table_schema = StructType([
     
@@ -109,7 +115,7 @@ league_table_schema = StructType([
     StructField("GA.1", IntegerType(), True),
     StructField("GD", IntegerType(), True),
     StructField("Pts", IntegerType(), True),
-    StructField("match-date", StringType(), True)
+    StructField("match-date", DateType(), True)
     
 ])
 
@@ -136,8 +142,11 @@ league_table_schema = StructType([
 src_query = (spark.readStream
         .format("csv")
         .option("header", "true")
+#         .option('dateFormat', 'dd/MM/yyyy')
+        .option("dateFormat", "yyyy-MMM-dd")
         .option("inferSchema", "false")
         .option("maxFilesPerTrigger", 2)
+        .option('dateFormat', 'yyyy-MMM-dd')
         .schema(league_table_schema)
         .load(football_data_path_src)
      )
@@ -154,7 +163,7 @@ bronze_streaming_query = (src_query
                           .queryName("BRONZE_QUERY_LEAGUE_STANDINGS_01")
                           .outputMode("append")
                           .trigger(once=True)
-                          .toTable("bronze_table") 
+                          .toTable("sandbox_env.bronze_tbl") 
                          )
 
 # COMMAND ----------
@@ -184,6 +193,12 @@ dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC 
+# MAGIC select * from sandbox_env.bronze_tbl
+
+# COMMAND ----------
+
 
 
 # COMMAND ----------
@@ -192,8 +207,8 @@ dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
 # MAGIC 
 # MAGIC 
 # MAGIC ## Silver zone
-# MAGIC * xxxxxxxxx --- [ ]
-# MAGIC * xxxxxxxxx --- [ ]
+# MAGIC * Perform MERGE operation between source and target tables --- [ ]
+# MAGIC * Convert transformation intents into PySpark logic
 # MAGIC * xxxxxxxxx --- [ ]
 
 # COMMAND ----------
