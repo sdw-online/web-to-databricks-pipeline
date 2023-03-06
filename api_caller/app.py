@@ -91,7 +91,7 @@ league_id                       =       os.getenv("LEAGUE_ID")
 season                          =       os.getenv("SEASON")
 team_id                         =       os.getenv("TEAM_ID")
 local_target_path               =       os.path.abspath('api_caller/temp_storage')
-match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01']
+match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01', '2023-03-06']
 headers                         =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
 query_string                    =       {'league': league_id, 'season': season, 'team': team_id}
 
@@ -123,6 +123,7 @@ for match_date in match_dates:
         root_logger.debug(f'>>>>   ')
         fixtures = response.json()['response']['fixtures']
         df = pd.json_normalize(fixtures)
+        df['match-date'] = match_date
         print(df)
 
 
