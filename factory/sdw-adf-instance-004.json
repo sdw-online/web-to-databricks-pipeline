@@ -1,0 +1,9 @@
+{
+	"name": "sdw-adf-instance-004",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "fc48eec8-a489-4afc-98d0-a54babf0458a",
+		"tenantId": "fc738b51-6d25-4f67-8590-21345c6e4411"
+	}
+}

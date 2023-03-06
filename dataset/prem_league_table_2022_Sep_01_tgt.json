@@ -1,0 +1,23 @@
+{
+	"name": "prem_league_table_2022_Sep_01_tgt",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "azure_blob_storage_linked_service_tgt_001",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "football-data"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
