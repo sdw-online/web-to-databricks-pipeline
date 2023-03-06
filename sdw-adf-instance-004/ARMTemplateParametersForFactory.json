@@ -1,0 +1,18 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "sdw-adf-instance-004"
+		},
+		"azure_blob_storage_linked_service_tgt_001_connectionString": {
+			"value": ""
+		},
+		"s3_linked_service_src_001_secretAccessKey": {
+			"value": ""
+		},
+		"s3_linked_service_src_001_properties_typeProperties_accessKeyId": {
+			"value": "AKIAYKUDG5KBX5CSDZXW"
+		}
+	}
+}
