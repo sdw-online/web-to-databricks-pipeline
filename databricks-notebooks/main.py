@@ -208,10 +208,6 @@ src_query = (spark.readStream
 
 # COMMAND ----------
 
-# display(src_query)
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC 
 # MAGIC ### Add unique ID column 
@@ -264,10 +260,6 @@ dbutils.fs.ls(f"{football_data_path_for_tgt_delta_files}")
 
 # COMMAND ----------
 
-# bronze_streaming_query.recentProgress
-
-# COMMAND ----------
-
 if len(bronze_streaming_query.recentProgress) > 0:
     no_of_incoming_rows = bronze_streaming_query.recentProgress[0]['numInputRows']
     query_name = bronze_streaming_query.recentProgress[0]['name']
@@ -276,8 +268,8 @@ if len(bronze_streaming_query.recentProgress) > 0:
     bronze_sink = bronze_streaming_query.recentProgress[0]['sink']['description']
     
     
-    print(f'=================== DATA PROFILING METRICS ===================')
-    print(f'==============================================================')
+    print(f'=================== DATA PROFILING METRICS: BRONZE ===================')
+    print(f'======================================================================')
     print(f'')
     print(f'Bronze query name:                       {query_name}')
     print(f'New rows inserted into bronze table:     {no_of_incoming_rows}')
@@ -436,10 +428,6 @@ def mergeChangesToDF(df, batchID):
 
 # COMMAND ----------
 
-sleep(3)
-
-# COMMAND ----------
-
 silver_streaming_df_1 = (spark
                              .readStream
                              .format("delta")
@@ -493,6 +481,10 @@ silver_streaming_df_1 = silver_streaming_df_1.select(["ranking", "team", "matche
 
 # COMMAND ----------
 
+sleep(3)
+
+# COMMAND ----------
+
 silver_streaming_query = (silver_streaming_df_1
                           .writeStream
                           .format("delta")
@@ -504,6 +496,31 @@ silver_streaming_query = (silver_streaming_df_1
                           .trigger(once=True)
                           .toTable("football_db.silver_tbl") 
 )
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Display the data profiling metrics
+
+# COMMAND ----------
+
+if len(silver_streaming_query.recentProgress) > 0:
+    no_of_incoming_rows = silver_streaming_query.recentProgress[0]['numInputRows']
+    query_execution_timestamp = silver_streaming_query.recentProgress[0]['timestamp']
+    silver_sources = silver_streaming_query.recentProgress[0]['sources'][0]['description']
+    silver_sink = silver_streaming_query.recentProgress[0]['sink']['description']
+    
+    
+    print(f'=================== DATA PROFILING METRICS: SILVER ===================')
+    print(f'======================================================================')
+    print(f'')
+    print(f'New rows inserted into silver table:     {no_of_incoming_rows}')
+    print(f'Source:                                  "{silver_sources}"  ')
+    print(f'Sink:                                    "{silver_sink}" ')
+else:
+    print('No changes appeared in the source directory')
+    
 
 # COMMAND ----------
 
@@ -711,10 +728,6 @@ def plot_premier_league_table(df):
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC 
 # MAGIC #### 2. Teams with Most Wins/Losses
@@ -864,7 +877,7 @@ def plot_teams_with_most_goals_scored_and_conceded_table(df):
         
         fig = px.bar(df,
                     x="team",
-                    y="wins",
+                    y="goals_for",
                     color="team",
                      title="Teams with most goals scored and conceded"
                     )
