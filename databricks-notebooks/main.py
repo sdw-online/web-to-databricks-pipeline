@@ -80,6 +80,12 @@ gold_table = gold_output_location + "tables/base_file/"
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Clear objects for this session
+
+# COMMAND ----------
+
 # Delete checkpoint locations
 
 
@@ -95,7 +101,8 @@ if DELETE_CHECKPOINT:
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC DROP TABLE IF EXISTS football_db.bronze_tbl
+# MAGIC DROP TABLE IF EXISTS football_db.bronze_tbl;
+# MAGIC DROP TABLE IF EXISTS football_db.silver_tbl;
 
 # COMMAND ----------
 
@@ -129,11 +136,11 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 league_table_schema = StructType([
     
-    StructField("Pos", IntegerType(), True),
-    StructField("Team", StringType(), True),
-    StructField("P", IntegerType(), True),
-    StructField("W", IntegerType(), True),
-    StructField("D", IntegerType(), True),
+    StructField("Pos", IntegerType(), False),
+    StructField("Team", StringType(), False),
+    StructField("P", IntegerType(), False),
+    StructField("W", IntegerType(), False),
+    StructField("D", IntegerType(), False),
     StructField("L", IntegerType(), True),
     StructField("GF", IntegerType(), True),
     StructField("GA", IntegerType(), True),
@@ -176,6 +183,10 @@ src_query = (spark.readStream
         .schema(league_table_schema)
         .load(football_data_path_for_src_csv_files)
      )
+
+# COMMAND ----------
+
+display(src_query)
 
 # COMMAND ----------
 
@@ -419,7 +430,7 @@ silver_streaming_df_1 = (spark
 # COMMAND ----------
 
 # Drop duplicates from incoming source table  
-df = df.dropDuplicates(["team_id"])
+# df = df.dropDuplicates(["team_id"])
 
 # COMMAND ----------
 
@@ -471,13 +482,6 @@ silver_streaming_query = (silver_streaming_df_1
 # MAGIC %sql
 # MAGIC 
 # MAGIC SELECT * FROM football_db.silver_tbl
-
-# COMMAND ----------
-
-# %sql
-
-# DROP TABLE IF EXISTS football_db.bronze_tbl;
-# DROP TABLE IF EXISTS football_db.silver_tbl;
 
 # COMMAND ----------
 
