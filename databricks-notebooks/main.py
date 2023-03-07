@@ -324,14 +324,6 @@ from pyspark.sql.functions import when, col
 
 def mergeChangesToDF(df, batchID):
     
-    # Filter league standings to records with the most played games for each team 
-    df = df.orderBy(col("P").desc())
-    
-    
-    # Drop duplicates from incoming source table  
-    df = df.dropDuplicates(["team_id"])
-    
-    
     # Create Delta table if it doesnt exist
     DeltaTable.createIfNotExists(spark, "football_db.bronze_tbl")
     
@@ -394,8 +386,40 @@ def mergeChangesToDF(df, batchID):
          set=update_statement)
      .whenNotMatchedInsertAll(
          values=insert_statement)
+     .orderBy("Pos", "P")
      .execute() 
     )
+    
+    
+    # Apply transformations 
+    
+    # Filter league standings to records with the most played games for each team 
+    df = df.orderBy(col("P").desc())
+    
+    
+    # Drop duplicates from incoming source table  
+    df = df.dropDuplicates(["team_id"])
+    
+    df = (
+        df.withColumnRenamed("Pts", "points")
+        .withColumnRenamed("W", "win_home")
+        .withColumnRenamed("D", "draw_home")
+        .withColumnRenamed("L", "loss_home")
+        .withColumnRenamed("GF", "goals_for_home")
+        .withColumnRenamed("GA", "goals_against_home")
+        .withColumnRenamed("W.1", "win_away")
+        .withColumnRenamed("D.1", "draw_away")
+        .withColumnRenamed("L.1", "loss_away")
+        .withColumnRenamed("GF.1", "goals_for_away")
+        .withColumnRenamed("GA.1", "goals_against_away")
+        .withColumnRenamed("GF", "goal_difference")
+         )
+    
+    # Select the latest 20 records for the league standings
+    df = df.limit(20)
+ 
+    
+    
     
 
 # COMMAND ----------
@@ -411,6 +435,8 @@ def mergeChangesToDF(df, batchID):
 # MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl
 
 # COMMAND ----------
+
+sleep(3)
 
 src_bronze_tbl_df = (spark
                  .readStream
@@ -433,7 +459,16 @@ silver_streaming_query = (src_bronze_tbl_df
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC 
+# MAGIC SELECT * FROM football_db.silver_tbl
 
+# COMMAND ----------
+
+# %sql
+
+# DROP TABLE IF EXISTS football_db.bronze_tbl;
+# DROP TABLE IF EXISTS football_db.silver_tbl;
 
 # COMMAND ----------
 
