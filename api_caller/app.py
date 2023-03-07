@@ -65,6 +65,10 @@ load_dotenv()
 
 
 
+# Add a flag for saving CSV files to the cloud 
+WRITE_TO_CLOUD = False
+
+
 # Set up environment variables
 
 ## AWS 
@@ -123,26 +127,38 @@ for match_date in match_dates:
         root_logger.debug(f'>>>>   ')
         fixtures = response.json()['response']['fixtures']
         df = pd.json_normalize(fixtures)
-        df['match-date'] = match_date
+        df['match_date'] = match_date
         print(df)
 
 
         # Write data frame to CSV file
         root_logger.info(f'>>>>   Writing data frame to CSV file ...')
         root_logger.debug(f'>>>>   ')
-        df.to_csv(CSV_BUFFER , index=False)
-        RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
 
-        # Load Postgres table to S3
-        s3_client.put_object(Bucket=S3_BUCKET,
-                    Key=S3_KEY,
-                    Body=RAW_TABLE_ROWS_AS_STRING_VALUES
-                    )
-        root_logger.info(f'>>>>   Successfully written and loaded "{team_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
-        root_logger.debug(f'>>>>   ')
-        root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
-        root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
-        root_logger.debug(f' ')
+
+
+
+        if WRITE_TO_CLOUD:
+            df.to_csv(CSV_BUFFER , index=False)
+            RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
+
+            # Load Postgres table to S3
+            s3_client.put_object(Bucket=S3_BUCKET,
+                        Key=S3_KEY,
+                        Body=RAW_TABLE_ROWS_AS_STRING_VALUES
+                        )
+            root_logger.info(f'>>>>   Successfully written and loaded "{team_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
+            root_logger.debug(f'>>>>   ')
+            root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+            root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+            root_logger.debug(f' ')
+        
+        else:
+            df.to_csv(CSV_BUFFER , index=False)
+            df.to_csv(f'{local_target_path}/{df}', index=False)
+            root_logger.info("")
+            root_logger.info(f'>>>>   Successfully written and loaded "{df}" file to local target location...')
+            root_logger.debug(f'>>>>   ')
 
 
 
