@@ -90,8 +90,8 @@ s3_client                                           =       boto3.client('s3', a
 
 # Specify the constants for the scraper 
 local_target_path               =   os.path.abspath('scraper/temp_storage')
-# match_dates                     =   ['2022-Sep-01', '2022-Oct-01', '2022-Nov-01', '2022-Dec-01', '2023-Jan-01', '2023-Feb-01', '2023-Mar-01', '2023-Mar-06']
-match_dates                     =   ['2022-Sep-01', '2023-Mar-06']
+match_dates                     =   ['2022-Sep-01', '2022-Oct-01', '2022-Nov-01', '2022-Dec-01', '2023-Jan-01', '2023-Feb-01', '2023-Mar-01', '2023-Mar-07']
+# match_dates                     =   ['2022-Sep-01', '2023-Mar-07']
 table_counter                   =   0
 
 
@@ -200,4 +200,4 @@ for match_date in match_dates:
 
 
     except Exception as e:
-        root_logger.debug(e)
+        root_logger.error(e)

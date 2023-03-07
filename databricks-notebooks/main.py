@@ -151,7 +151,7 @@ league_table_schema = StructType([
     StructField("GA.1", IntegerType(), True),
     StructField("GD", IntegerType(), True),
     StructField("Pts", IntegerType(), True),
-    StructField("match-date", DateType(), True)
+    StructField("match_date", DateType(), True)
     
 ])
 
@@ -360,7 +360,7 @@ def mergeChangesToDF(df, batchID):
         "GF.1": source_tbl["GF.1"],
         "GA.1": source_tbl["GA.1"],
         "GD": source_tbl.GD,
-        "match-date": source_tbl["match-date"],
+        "match_date": source_tbl["match_date"],
         "update_flag": lit("U")  # Add a flag column for updates
     }
 
@@ -381,7 +381,7 @@ def mergeChangesToDF(df, batchID):
         "GA.1": source_tbl["GA.1"],
         "GD": source_tbl.GD,
         "Pts": source_tbl.Pts,
-        "match-date": source_tbl["match-date"],
+        "match_date": source_tbl["match_date"],
         "team_id": source_tbl.team_id,
         "update_flag": lit("I")  # Add a flag column for inserts
     }
