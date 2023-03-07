@@ -59,20 +59,35 @@ def remove_consecutive_commas(directory):
         column_names = ["Pos", "Team", "P", "W", "D", "L", "GF", "GA", "W", "D", "L", "GF", "GA", "GD", "Pts", "match_date", "drop_this_field_1", "drop_this_field_2", "drop_this_field_3"]
         df = pd.read_csv(csv_filepath, sep=',', header=None)
         
-        
+
         df = df.drop(df.index[0])
 
         df.columns = column_names 
         
          # Drop specific columns
         df = df.drop(columns=["drop_this_field_1", "drop_this_field_2", "drop_this_field_3"])
+
+        # Save data frame as CSV file
+        df.to_csv(csv_filepath, index=False)
+    
         
         print(f'Data frame - {filename}:  ')
+        print("")
         print(df)
-        print("--------------------")
+        print("")
+        print(f">>> Successfully saved '{filename}' file as CSV file to target destination. ")
+        print("-----------------------------------------------------------------------------")
+        print("")
         print("")
 
 
+    print()
+    print()
+    print("----------------------------------------------------------")
+    print('>>> CSV file transformations completed. Terminating session.')
+    print("----------------------------------------------------------")
+    print()
+    print()
 
 
 copy_and_paste_csv_files(original_scraped_data_directory, dev_scraped_data_directory)
