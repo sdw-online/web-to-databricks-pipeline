@@ -187,8 +187,6 @@ src_query = (spark.readStream
 
 from pyspark.sql.functions import concat, lit, lower, regexp_replace
 
-# src_query = src_query.withColumn("team_id", concat(lower(replace("src_query["team"]", " ", "")), lit("_123")))
-
 src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
 
 # COMMAND ----------
