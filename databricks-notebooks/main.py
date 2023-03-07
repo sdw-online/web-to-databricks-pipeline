@@ -271,6 +271,9 @@ dbutils.fs.ls(f"{football_data_path_for_tgt_delta_files}")
 if len(bronze_streaming_query.recentProgress) > 0:
     no_of_incoming_rows = bronze_streaming_query.recentProgress[0]['numInputRows']
     query_name = bronze_streaming_query.recentProgress[0]['name']
+    query_execution_timestamp = bronze_streaming_query.recentProgress[0]['timestamp']
+    bronze_sources = bronze_streaming_query.recentProgress[0]['sources'][0]['description']
+    bronze_sink = bronze_streaming_query.recentProgress[0]['sink']['description']
     
     
     print(f'=================== DATA PROFILING METRICS ===================')
@@ -278,6 +281,8 @@ if len(bronze_streaming_query.recentProgress) > 0:
     print(f'')
     print(f'Bronze query name:                       {query_name}')
     print(f'New rows inserted into bronze table:     {no_of_incoming_rows}')
+    print(f'Source:                                  "{bronze_sources}"  ')
+    print(f'Sink:                                    "{bronze_sink}" ')
 else:
     print('No changes appeared in the source directory')
     
@@ -449,11 +454,6 @@ silver_streaming_df_1 = (spark
 
 # COMMAND ----------
 
-# Drop duplicates from incoming source table  
-# df = df.dropDuplicates(["team_id"])
-
-# COMMAND ----------
-
 # Rename columns 
 
 silver_streaming_df_1 =  (
@@ -493,16 +493,6 @@ silver_streaming_df_1 = silver_streaming_df_1.select(["ranking", "team", "matche
 
 # COMMAND ----------
 
-# Filter league standings to records with the most played games for each team 
-# silver_streaming_df_1 = silver_streaming_df_1.groupBy("team").max("matches_played")
-
-# COMMAND ----------
-
-# Select the latest 20 records for the league standings
-# silver_streaming_df_1 = silver_streaming_df_1.limit(20)
-
-# COMMAND ----------
-
 silver_streaming_query = (silver_streaming_df_1
                           .writeStream
                           .format("delta")
@@ -514,10 +504,6 @@ silver_streaming_query = (silver_streaming_df_1
                           .trigger(once=True)
                           .toTable("football_db.silver_tbl") 
 )
-
-# COMMAND ----------
-
-
 
 # COMMAND ----------
 
@@ -556,10 +542,6 @@ silver_tbl_df = spark.read.table("football_db.silver_tbl")
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC 
 # MAGIC 
@@ -567,8 +549,8 @@ silver_tbl_df = spark.read.table("football_db.silver_tbl")
 # MAGIC * Use silver delta table as source for data frame for gold zone --- [x]
 # MAGIC * Convert gold data frame to temp view  --- [x] 
 # MAGIC * Persist dataframe to cache  --- [x]
-# MAGIC * Drop duplicates from data frame  --- [ ]
-# MAGIC * Use aggregate operations to summarize table standings data  --- [ ]
+# MAGIC * Drop duplicates from data frame  --- [x]
+# MAGIC * Use aggregate operations to summarize table standings data  --- [x]
 # MAGIC * Create and visualize the aggregate tables  --- [x]
 # MAGIC 
 # MAGIC 
@@ -576,7 +558,6 @@ silver_tbl_df = spark.read.table("football_db.silver_tbl")
 # MAGIC * 1. Premier League table
 # MAGIC * 2. Teams with Most Wins/Losses
 # MAGIC * 3. Teams with Most Goals Scored/Conceded
-# MAGIC * 4. Team Ranking by Month
 
 # COMMAND ----------
 
@@ -644,7 +625,7 @@ import pandas as pd
 
 def create_premier_league_table(df):
     try:
-        print('Creating the Premier League table ... ')
+        print('Using the source gold data frame to create the Premier League delta table ... ')
         print('')
         df.createOrReplaceTempView("premier_league_tbl_sql")
 
@@ -680,7 +661,7 @@ def create_premier_league_table(df):
 
         """)
         df.write.format("delta").mode("overwrite").save(premier_league_table_gold)
-        print('Successfully created the Premier League table')
+        print(f'Successfully created the Premier League delta table in the "{premier_league_table_gold}" location ')
     
     except Exception as e:
         print(e)
@@ -696,68 +677,37 @@ def plot_premier_league_table(df):
 
         df = spark.sql("""
 
-            SELECT * FROM premier_league_tbl_sql    
+            SELECT  ranking
+                   , team
+                   , matches_played
+                   , wins
+                   , draws
+                   , losses
+                   , goals_for
+                   , goals_against
+                   , goal_difference
+                   , points  
+             FROM premier_league_tbl_sql    
 
         """)
 
-        df = df.toPandas()
+#         df = df.toPandas()
         
-        fig = px.bar(df,
-                    x="team",
-                    y="wins",
-                     title="Premier League Table"
-                     
-                    )
+#         fig = px.bar(df,
+#                     x="team",
+#                     y="wins",
+#                      title="Premier League Table"
+#                     )
     
     
     except Exception as e:
         print(e)
     
     
-    return fig.show()
+#     return fig.show()
+    return display(df)
     
     
-
-# COMMAND ----------
-
-# MAGIC %sql 
-# MAGIC 
-# MAGIC SELECT DISTINCT     ranking
-# MAGIC                     , team
-# MAGIC                     , matches_played
-# MAGIC                     , wins
-# MAGIC                     , draws
-# MAGIC                     , losses
-# MAGIC                     , goals_for
-# MAGIC                     , goals_against
-# MAGIC                     , goal_difference
-# MAGIC                     , points 
-# MAGIC FROM (
-# MAGIC         SELECT ranking
-# MAGIC                , team
-# MAGIC                , matches_played
-# MAGIC                , wins
-# MAGIC                , draws
-# MAGIC                , losses
-# MAGIC                , goals_for
-# MAGIC                , goals_against
-# MAGIC                , goal_difference
-# MAGIC                , points 
-# MAGIC                , RANK() OVER (PARTITION BY team 
-# MAGIC                                    ORDER BY matches_played 
-# MAGIC                                          DESC) as rank 
-# MAGIC          FROM gold_df_sql
-# MAGIC )
-# MAGIC WHERE      rank = 1
-# MAGIC ORDER BY   ranking ASC
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
 
 # COMMAND ----------
 
@@ -773,7 +723,7 @@ def plot_premier_league_table(df):
 
 def create_teams_with_most_wins_and_losses_table(df):
     try:
-        print('Creating the table for teams with most wins/losses ... ')
+        print('Using the source gold data frame to create the table for teams with most wins/losses ... ')
         print('')
         df.createOrReplaceTempView("teams_with_most_wins_and_losses_tbl_sql")
 
@@ -809,7 +759,7 @@ def create_teams_with_most_wins_and_losses_table(df):
 
         """)
         df.write.format("delta").mode("overwrite").save(teams_with_most_wins_and_losses_table_gold)
-        print('Successfully created the table for teams with most wins/losses ... ')
+        print(f'Successfully created the delta table for teams with most wins/losses in "{teams_with_most_wins_and_losses_table_gold}" location... ')
     
     except Exception as e:
         print(e)
@@ -854,7 +804,7 @@ def plot_teams_with_most_wins_and_losses_table(df):
 
 def create_teams_with_most_goals_scored_and_conceded_table(df):
     try:
-        print('Creating the table for teams with most goals scored/conceded ... ')
+        print('Using the source gold data frame to create the table for teams with most goals scored/conceded ... ')
         print('')
         df.createOrReplaceTempView("teams_with_most_goals_scored_and_conceded_tbl_sql")
 
@@ -890,7 +840,7 @@ def create_teams_with_most_goals_scored_and_conceded_table(df):
 
         """)
         df.write.format("delta").mode("overwrite").save(teams_with_most_goals_scored_and_conceded_table_gold)
-        print('Successfully created the table for teams with most goals scored/conceded ... ')
+        print(f'Successfully created the delta table for teams with most goals scored/conceded in "{teams_with_most_goals_scored_and_conceded_table_gold}" location ... ')
     
     except Exception as e:
         print(e)
@@ -927,35 +877,94 @@ def plot_teams_with_most_goals_scored_and_conceded_table(df):
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC 
-# MAGIC #### 4. Team Ranking by Month
-
-# COMMAND ----------
-
 
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ## Create and visualize the aggregated tables
+# MAGIC ### Create and visualize the aggregated tables
 
 # COMMAND ----------
 
-# 1
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 1. Premier League Table 
+
+# COMMAND ----------
+
+# 1 - Create the delta table for the aggregate
+
 create_premier_league_table(gold_tbl_df)
-plot_premier_league_table(gold_tbl_df)
 
-# 2
+# COMMAND ----------
+
+# 2 - Read the delta table into a data frame to create an aggregate table
+
+premier_league_df = (spark
+.read
+.format("delta")
+.load(premier_league_table_gold)
+)
+
+# COMMAND ----------
+
+# 3 - Visualize the aggregate table
+
+plot_premier_league_table(premier_league_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 2. Teams with Most Wins/Losses
+
+# COMMAND ----------
+
+# 1 - Create the delta table for the aggregate
+
 create_teams_with_most_wins_and_losses_table(gold_tbl_df)
-plot_teams_with_most_wins_and_losses_table(gold_tbl_df)
 
-# 3
+# COMMAND ----------
+
+# 2 - Read the delta table into a data frame to create an aggregate table
+
+teams_with_most_wins_and_losses_df = (spark
+.read
+.format("delta")
+.load(teams_with_most_wins_and_losses_table_gold)
+)
+
+# COMMAND ----------
+
+# 3 - Visualize the aggregate table
+
+plot_teams_with_most_wins_and_losses_table(teams_with_most_wins_and_losses_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 3. Teams with Most Goals Scored/Conceded
+
+# COMMAND ----------
+
+# 1 - Create the delta table for the aggregate
 
 create_teams_with_most_goals_scored_and_conceded_table(gold_tbl_df)
+
+# COMMAND ----------
+
+# 2 - Read the delta table into a data frame to create an aggregate table
+
+teams_with_most_goals_scored_and_conceded_df = (spark
+.read
+.format("delta")
+.load(teams_with_most_goals_scored_and_conceded_table_gold)
+)
+
+# COMMAND ----------
+
+# 3 - Visualize the aggregate table
+
 plot_teams_with_most_goals_scored_and_conceded_table(gold_tbl_df)
-
-# 4 
-
-
