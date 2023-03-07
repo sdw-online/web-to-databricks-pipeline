@@ -280,7 +280,7 @@ else:
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Analyze the streaing results in temp views  
+# MAGIC ### Analyze the bronze streaming results in temp views 
 
 # COMMAND ----------
 
@@ -511,9 +511,109 @@ silver_streaming_query = (silver_streaming_df_1
 
 # COMMAND ----------
 
+
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Analyze the silver streaming results in temp views 
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC DESCRIBE HISTORY football_db.silver_tbl
+# MAGIC 
+# MAGIC -- select * from football_db.bronze_tbl version as of 1
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC 
 # MAGIC SELECT * FROM football_db.silver_tbl
+
+# COMMAND ----------
+
+# Convert Hive table into delta table 
+silver_tbl_df = spark.read.table("football_db.silver_tbl")
+
+
+# Save silver_tbl_df to delta folder
+(silver_tbl_df
+     .write
+     .format("delta")
+     .mode("append")
+     .option("mergeSchema", True)
+     .save(silver_table)
+)
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC 
+# MAGIC ## Gold zone
+# MAGIC * xxxxxxxxx --- [ ]
+# MAGIC * xxxxxxxxx --- [ ]
+# MAGIC * xxxxxxxxx --- [ ]
+
+# COMMAND ----------
+
+gold_tbl_df = (spark
+.read
+.format("delta")
+.load(silver_table)
+)
+
+# COMMAND ----------
+
+gold_tbl_df.createOrReplaceTempView("gold_df_sql")
+# gold_tbl_df = spark.sql(""" SELECT * FROM gold_df_sql ORDER BY 2, 1 """)
+gold_tbl_df.persist(StorageLevel.MEMORY_ONLY)
+gold_tbl_df = gold_tbl_df.dropDuplicates()
+display(gold_tbl_df)
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC SELECT ranking, team, matches_played, wins, draws, losses, goals_for, goals_against, goal_difference, points  FROM gold_df_sql 
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC SELECT DISTINCT     ranking
+# MAGIC                     , team
+# MAGIC                     , matches_played
+# MAGIC                     , wins
+# MAGIC                     , draws
+# MAGIC                     , losses
+# MAGIC                     , goals_for
+# MAGIC                     , goals_against
+# MAGIC                     , goal_difference
+# MAGIC                     , points 
+# MAGIC FROM (
+# MAGIC         SELECT ranking
+# MAGIC                , team
+# MAGIC                , matches_played
+# MAGIC                , wins
+# MAGIC                , draws
+# MAGIC                , losses
+# MAGIC                , goals_for
+# MAGIC                , goals_against
+# MAGIC                , goal_difference
+# MAGIC                , points 
+# MAGIC                , RANK() OVER (PARTITION BY team ORDER BY matches_played DESC) as rank 
+# MAGIC          FROM gold_df_sql
+# MAGIC )
+# MAGIC WHERE      rank = 1
+# MAGIC ORDER BY   ranking ASC
 
 # COMMAND ----------
 
