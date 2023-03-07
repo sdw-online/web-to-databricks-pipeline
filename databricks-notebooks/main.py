@@ -169,9 +169,15 @@ src_query = (spark.readStream
 
 # COMMAND ----------
 
-from pyspark.sql.functions import monotonically_increasing_id
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Add unique ID column 
 
-src_query = src_query.withColumn("team_id", monotonically_increasing_id())
+# COMMAND ----------
+
+from pyspark.sql.functions import concat, lit
+
+src_query = src_query.withColumn("team_id", concat(src_query["team"], lit("_123")))
 
 # COMMAND ----------
 
@@ -256,6 +262,7 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
      .write
      .format("delta")
      .mode("overwrite")
+     .option("mergeSchema", True)
      .save(bronze_table)
 )
 
