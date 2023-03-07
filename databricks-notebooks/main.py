@@ -169,6 +169,12 @@ src_query = (spark.readStream
 
 # COMMAND ----------
 
+from pyspark.sql.functions import monotonically_increasing_id
+
+src_query = src_query.withColumn("team_id", monotonically_increasing_id())
+
+# COMMAND ----------
+
 bronze_streaming_query = (src_query
                           .writeStream
                           .format("delta") 
@@ -281,8 +287,25 @@ src_bronze_tbl_df = (spark
 
 # COMMAND ----------
 
+delta_df = DeltaTable.forPath(spark, bronze_table)
+
+# COMMAND ----------
+
 def mergeChangesToDF(microbatchDF, batchID):
-    df = DeltaTable.forPath(spark, bronze_table)
+    
+    # drop duplicates 
+    microbatchDF = microbatchDF.dropDuplicates()
+    
+    (deltadf.alias("target_tbl")
+     .merge(microbatchDF.alias("source_tbl"),
+            source
+           
+           
+           )
+    
+    )
+    
+    
     return display(df)
 
 # COMMAND ----------
