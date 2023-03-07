@@ -314,14 +314,22 @@ delta_df.toDF().show()
 from pyspark.sql.functions import when
 
 
-def mergeChangesToDF(microbatchDF):
+def mergeChangesToDF(microbatchDF, batchID):
     
-    # drop duplicates 
-    microbatchDF = microbatchDF.dropDuplicates()
+    delta_df = DeltaTable.forPath(spark, bronze_table)
     
+    # Set condition for MERGE 
+    merge_condition = "target_tbl.team_id = source_tbl.team_id"
+    
+    
+    # Drop duplicates from incoming source table  
+    microbatchDF = microbatchDF.dropDuplicates(["team_id", "P"])
+    
+    
+    # Perform the UPSERT 
     (delta_df.alias("target_tbl")
      .merge(microbatchDF
-            .alias("source_tbl"), "target_tbl.team_id = source_tbl.team_id")
+            .alias("source_tbl"), merge_condition)
      
      .whenMatchedUpdateAll("source_tbl.team_id  <>  target_tbl.team_id")
      .whenNotMatchedInsertAll()
