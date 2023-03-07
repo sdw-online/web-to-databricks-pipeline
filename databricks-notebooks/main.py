@@ -89,20 +89,30 @@ gold_table = gold_output_location + "tables/base_file/"
 # Delete checkpoint locations
 
 
-DELETE_CHECKPOINT = True
-# DELETE_CHECKPOINT = False
+# DELETE_CHECKPOINT = True
+DELETE_CHECKPOINT = False
 
 
 if DELETE_CHECKPOINT:
-    dbutils.fs.rm(bronze_checkpoint, True)
-    dbutils.fs.rm(silver_checkpoint, True)
+    try:
+        dbutils.fs.rm(bronze_checkpoint, True)
+        dbutils.fs.rm(silver_checkpoint, True)
+
+        # Drop directory
+        dbutils.fs.rm(f"{football_data_path_for_tgt_delta_files}", recurse=True)
+        print("Deleted checkpoints and directories successfully ")
+    except Exception as e:
+        print(e)
+    
+else:
+    print("No checkpoints deleted.")
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC DROP TABLE IF EXISTS football_db.bronze_tbl;
-# MAGIC DROP TABLE IF EXISTS football_db.silver_tbl;
+# %sql
+
+# DROP TABLE IF EXISTS football_db.bronze_tbl;
+# DROP TABLE IF EXISTS football_db.silver_tbl;
 
 # COMMAND ----------
 
@@ -159,13 +169,19 @@ league_table_schema = StructType([
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Add sandbox database
+# MAGIC ### Create database objects
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC 
 # MAGIC CREATE DATABASE IF NOT EXISTS football_db
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl
 
 # COMMAND ----------
 
@@ -186,7 +202,7 @@ src_query = (spark.readStream
 
 # COMMAND ----------
 
-display(src_query)
+# display(src_query)
 
 # COMMAND ----------
 
@@ -290,7 +306,7 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 (bronze_tbl_df
      .write
      .format("delta")
-     .mode("overwrite")
+     .mode("append")
      .option("mergeSchema", True)
      .save(bronze_table)
 )
@@ -409,9 +425,7 @@ def mergeChangesToDF(df, batchID):
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl
+sleep(3)
 
 # COMMAND ----------
 
@@ -456,13 +470,30 @@ silver_streaming_df_1 =  (
 
 # COMMAND ----------
 
+# Create new calculated columns for wins, draws, losses, goals_for, goals_against by combining the home & away columns 
+
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("wins", col("win_home") + col("win_away"))
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("draws", col("draw_home") + col("draw_away"))
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("losses", col("loss_home") + col("loss_away"))
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("goals_for", col("goals_for_home") + col("goals_for_away"))
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("goals_against", col("goals_against_home") + col("goals_against_away"))
+
+
+# COMMAND ----------
+
+# Organise the columns in a set order
+
+silver_streaming_df_1 = silver_streaming_df_1.select(["ranking", "team", "matches_played", "wins", "draws", "losses", "goals_for", "goals_against", "goal_difference", "points"])
+
+# COMMAND ----------
+
 # Filter league standings to records with the most played games for each team 
-# silver_streaming_df_1 = silver_streaming_df_1.orderBy(col("P").desc())
+# silver_streaming_df_1 = silver_streaming_df_1.groupBy("team").max("matches_played")
 
 # COMMAND ----------
 
 # Select the latest 20 records for the league standings
-silver_streaming_df_1 = silver_streaming_df_1.limit(20)
+# silver_streaming_df_1 = silver_streaming_df_1.limit(20)
 
 # COMMAND ----------
 
@@ -473,6 +504,7 @@ silver_streaming_query = (silver_streaming_df_1
                           .foreachBatch(mergeChangesToDF)
                           .option("checkpointLocation", silver_checkpoint)
                           .option("mergeSchema", True)
+                          .option("ignoreChanges", False)
                           .trigger(once=True)
                           .toTable("football_db.silver_tbl") 
 )
