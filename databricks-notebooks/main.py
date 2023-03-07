@@ -71,6 +71,12 @@ silver_table = silver_output_location + "tables/"
 gold_table = gold_output_location + "tables/base_file/"
 
 
+# Aggregations
+
+premier_league_table_gold                               =   gold_table + 'premier_league_table/delta_file'
+teams_with_most_wins_and_losses_table_gold              =   gold_table + 'teams_with_most_wins_and_losses/delta_file'
+teams_with_most_goals_scored_and_conceded_table_gold    =   gold_table + 'teams_with_most_goals_scored_and_conceded/delta_file'
+
 
 
 # COMMAND ----------
@@ -89,20 +95,30 @@ gold_table = gold_output_location + "tables/base_file/"
 # Delete checkpoint locations
 
 
-DELETE_CHECKPOINT = True
-# DELETE_CHECKPOINT = False
+# DELETE_CHECKPOINT = True
+DELETE_CHECKPOINT = False
 
 
 if DELETE_CHECKPOINT:
-    dbutils.fs.rm(bronze_checkpoint, True)
-    dbutils.fs.rm(silver_checkpoint, True)
+    try:
+        dbutils.fs.rm(bronze_checkpoint, True)
+        dbutils.fs.rm(silver_checkpoint, True)
+
+        # Drop directory
+        dbutils.fs.rm(f"{football_data_path_for_tgt_delta_files}", recurse=True)
+        print("Deleted checkpoints and directories successfully ")
+    except Exception as e:
+        print(e)
+    
+else:
+    print("No checkpoints deleted.")
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC DROP TABLE IF EXISTS football_db.bronze_tbl;
-# MAGIC DROP TABLE IF EXISTS football_db.silver_tbl;
+# %sql
+
+# DROP TABLE IF EXISTS football_db.bronze_tbl;
+# DROP TABLE IF EXISTS football_db.silver_tbl;
 
 # COMMAND ----------
 
@@ -159,13 +175,19 @@ league_table_schema = StructType([
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Add sandbox database
+# MAGIC ### Create database objects
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC 
 # MAGIC CREATE DATABASE IF NOT EXISTS football_db
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl
 
 # COMMAND ----------
 
@@ -183,10 +205,6 @@ src_query = (spark.readStream
         .schema(league_table_schema)
         .load(football_data_path_for_src_csv_files)
      )
-
-# COMMAND ----------
-
-display(src_query)
 
 # COMMAND ----------
 
@@ -242,20 +260,21 @@ dbutils.fs.ls(f"{football_data_path_for_tgt_delta_files}")
 
 # COMMAND ----------
 
-# bronze_streaming_query.recentProgress
-
-# COMMAND ----------
-
 if len(bronze_streaming_query.recentProgress) > 0:
     no_of_incoming_rows = bronze_streaming_query.recentProgress[0]['numInputRows']
     query_name = bronze_streaming_query.recentProgress[0]['name']
+    query_execution_timestamp = bronze_streaming_query.recentProgress[0]['timestamp']
+    bronze_sources = bronze_streaming_query.recentProgress[0]['sources'][0]['description']
+    bronze_sink = bronze_streaming_query.recentProgress[0]['sink']['description']
     
     
-    print(f'=================== DATA PROFILING METRICS ===================')
-    print(f'==============================================================')
+    print(f'=================== DATA PROFILING METRICS: BRONZE ===================')
+    print(f'======================================================================')
     print(f'')
     print(f'Bronze query name:                       {query_name}')
     print(f'New rows inserted into bronze table:     {no_of_incoming_rows}')
+    print(f'Source:                                  "{bronze_sources}"  ')
+    print(f'Sink:                                    "{bronze_sink}" ')
 else:
     print('No changes appeared in the source directory')
     
@@ -264,7 +283,7 @@ else:
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Analyze the streaing results in temp views  
+# MAGIC ### Analyze the bronze streaming results in temp views 
 
 # COMMAND ----------
 
@@ -290,7 +309,7 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 (bronze_tbl_df
      .write
      .format("delta")
-     .mode("overwrite")
+     .mode("append")
      .option("mergeSchema", True)
      .save(bronze_table)
 )
@@ -409,12 +428,6 @@ def mergeChangesToDF(df, batchID):
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl
-
-# COMMAND ----------
-
 silver_streaming_df_1 = (spark
                              .readStream
                              .format("delta")
@@ -426,11 +439,6 @@ silver_streaming_df_1 = (spark
 # MAGIC %md
 # MAGIC 
 # MAGIC ### Apply transformation logic to streaming dataframes
-
-# COMMAND ----------
-
-# Drop duplicates from incoming source table  
-# df = df.dropDuplicates(["team_id"])
 
 # COMMAND ----------
 
@@ -456,13 +464,24 @@ silver_streaming_df_1 =  (
 
 # COMMAND ----------
 
-# Filter league standings to records with the most played games for each team 
-# silver_streaming_df_1 = silver_streaming_df_1.orderBy(col("P").desc())
+# Create new calculated columns for wins, draws, losses, goals_for, goals_against by combining the home & away columns 
+
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("wins", col("win_home") + col("win_away"))
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("draws", col("draw_home") + col("draw_away"))
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("losses", col("loss_home") + col("loss_away"))
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("goals_for", col("goals_for_home") + col("goals_for_away"))
+silver_streaming_df_1 = silver_streaming_df_1.withColumn("goals_against", col("goals_against_home") + col("goals_against_away"))
+
 
 # COMMAND ----------
 
-# Select the latest 20 records for the league standings
-silver_streaming_df_1 = silver_streaming_df_1.limit(20)
+# Organise the columns in a set order
+
+silver_streaming_df_1 = silver_streaming_df_1.select(["ranking", "team", "matches_played", "wins", "draws", "losses", "goals_for", "goals_against", "goal_difference", "points"])
+
+# COMMAND ----------
+
+sleep(3)
 
 # COMMAND ----------
 
@@ -473,9 +492,49 @@ silver_streaming_query = (silver_streaming_df_1
                           .foreachBatch(mergeChangesToDF)
                           .option("checkpointLocation", silver_checkpoint)
                           .option("mergeSchema", True)
+                          .option("ignoreChanges", False)
                           .trigger(once=True)
                           .toTable("football_db.silver_tbl") 
 )
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Display the data profiling metrics
+
+# COMMAND ----------
+
+if len(silver_streaming_query.recentProgress) > 0:
+    no_of_incoming_rows = silver_streaming_query.recentProgress[0]['numInputRows']
+    query_execution_timestamp = silver_streaming_query.recentProgress[0]['timestamp']
+    silver_sources = silver_streaming_query.recentProgress[0]['sources'][0]['description']
+    silver_sink = silver_streaming_query.recentProgress[0]['sink']['description']
+    
+    
+    print(f'=================== DATA PROFILING METRICS: SILVER ===================')
+    print(f'======================================================================')
+    print(f'')
+    print(f'New rows inserted into silver table:     {no_of_incoming_rows}')
+    print(f'Source:                                  "{silver_sources}"  ')
+    print(f'Sink:                                    "{silver_sink}" ')
+else:
+    print('No changes appeared in the source directory')
+    
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Analyze the silver streaming results in temp views 
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC DESCRIBE HISTORY football_db.silver_tbl
+# MAGIC 
+# MAGIC -- select * from football_db.bronze_tbl version as of 1
 
 # COMMAND ----------
 
@@ -485,4 +544,440 @@ silver_streaming_query = (silver_streaming_df_1
 
 # COMMAND ----------
 
+# Convert Hive table into delta table 
+silver_tbl_df = spark.read.table("football_db.silver_tbl")
 
+
+# Save silver_tbl_df to delta folder
+(silver_tbl_df
+     .write
+     .format("delta")
+     .mode("append")
+     .option("mergeSchema", True)
+     .save(silver_table)
+)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC 
+# MAGIC ## Gold zone
+# MAGIC * Use silver delta table as source for data frame for gold zone --- [x]
+# MAGIC * Convert gold data frame to temp view  --- [x] 
+# MAGIC * Persist dataframe to cache  --- [x]
+# MAGIC * Drop duplicates from data frame  --- [x]
+# MAGIC * Use aggregate operations to summarize table standings data  --- [x]
+# MAGIC * Create and visualize the aggregate tables  --- [x]
+# MAGIC 
+# MAGIC 
+# MAGIC **Create the following tables:**
+# MAGIC * 1. Premier League table
+# MAGIC * 2. Teams with Most Wins/Losses
+# MAGIC * 3. Teams with Most Goals Scored/Conceded
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC 
+# MAGIC ### Use silver delta table as source for gold delta table
+
+# COMMAND ----------
+
+gold_tbl_df = (spark
+.read
+.format("delta")
+.load(silver_table)
+)
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC 
+# MAGIC ### Convert gold data frame to temp view
+
+# COMMAND ----------
+
+gold_tbl_df.createOrReplaceTempView("gold_df_sql")
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC 
+# MAGIC ### Persist dataframe to cache
+
+# COMMAND ----------
+
+gold_tbl_df.persist(StorageLevel.MEMORY_ONLY)
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC 
+# MAGIC ### Drop duplicates from data frame
+
+# COMMAND ----------
+
+gold_tbl_df = gold_tbl_df.dropDuplicates()
+display(gold_tbl_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Use aggregate operations to summarize table standings data
+
+# COMMAND ----------
+
+import plotly.express as px
+import pandas as pd
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 1. Premier League Table 
+
+# COMMAND ----------
+
+def create_premier_league_table(df):
+    try:
+        print('Using the source gold data frame to create the Premier League delta table ... ')
+        print('')
+        df.createOrReplaceTempView("premier_league_tbl_sql")
+
+        df = spark.sql("""
+                            SELECT DISTINCT     ranking
+                                            , team
+                                            , matches_played
+                                            , wins
+                                            , draws
+                                            , losses
+                                            , goals_for
+                                            , goals_against
+                                            , goal_difference
+                                            , points 
+                        FROM (
+                                SELECT ranking
+                                       , team
+                                       , matches_played
+                                       , wins
+                                       , draws
+                                       , losses
+                                       , goals_for
+                                       , goals_against
+                                       , goal_difference
+                                       , points 
+                                       , RANK() OVER (PARTITION BY team 
+                                                           ORDER BY matches_played 
+                                                                 DESC) as rank 
+                                 FROM gold_df_sql
+                        )
+                        WHERE      rank = 1
+                        ORDER BY   ranking ASC
+
+        """)
+        df.write.format("delta").mode("overwrite").save(premier_league_table_gold)
+        print(f'Successfully created the Premier League delta table in the "{premier_league_table_gold}" location ')
+    
+    except Exception as e:
+        print(e)
+
+
+# COMMAND ----------
+
+def plot_premier_league_table(df):
+    try:
+        print('Plotting the Premier League table using Plotly ... ')
+        print('')
+        df.createOrReplaceTempView("premier_league_tbl_sql")
+
+        df = spark.sql("""
+
+            SELECT  ranking
+                   , team
+                   , matches_played
+                   , wins
+                   , draws
+                   , losses
+                   , goals_for
+                   , goals_against
+                   , goal_difference
+                   , points  
+             FROM premier_league_tbl_sql    
+
+        """)
+
+#         df = df.toPandas()
+        
+#         fig = px.bar(df,
+#                     x="team",
+#                     y="wins",
+#                      title="Premier League Table"
+#                     )
+    
+    
+    except Exception as e:
+        print(e)
+    
+    
+#     return fig.show()
+    return display(df)
+    
+    
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 2. Teams with Most Wins/Losses
+
+# COMMAND ----------
+
+def create_teams_with_most_wins_and_losses_table(df):
+    try:
+        print('Using the source gold data frame to create the table for teams with most wins/losses ... ')
+        print('')
+        df.createOrReplaceTempView("teams_with_most_wins_and_losses_tbl_sql")
+
+        df = spark.sql("""
+                            SELECT DISTINCT     ranking
+                                                , team
+                                                , matches_played
+                                                , wins
+                                                , draws
+                                                , losses
+                                                , goals_for
+                                                , goals_against
+                                                , goal_difference
+                                                , points 
+                        FROM (
+                                SELECT ranking
+                                       , team
+                                       , matches_played
+                                       , wins
+                                       , draws
+                                       , losses
+                                       , goals_for
+                                       , goals_against
+                                       , goal_difference
+                                       , points 
+                                       , RANK() OVER (PARTITION BY team 
+                                                           ORDER BY matches_played 
+                                                                 DESC) as rank 
+                                 FROM gold_df_sql
+                        )
+                        WHERE      rank = 1
+                        ORDER BY   ranking ASC
+
+        """)
+        df.write.format("delta").mode("overwrite").save(teams_with_most_wins_and_losses_table_gold)
+        print(f'Successfully created the delta table for teams with most wins/losses in "{teams_with_most_wins_and_losses_table_gold}" location... ')
+    
+    except Exception as e:
+        print(e)
+
+
+# COMMAND ----------
+
+def plot_teams_with_most_wins_and_losses_table(df):
+    try:
+        print('Plotting the table for teams with most wins and losses using Plotly ... ')
+        print('')
+        df.createOrReplaceTempView("teams_with_most_wins_and_losses_tbl_sql")
+
+        df = spark.sql("""
+
+            SELECT * FROM teams_with_most_wins_and_losses_tbl_sql    
+
+        """)
+
+        df = df.toPandas()
+        
+        fig = px.bar(df,
+                    x="team",
+                    y="wins",
+                    color="team",
+                     title="Teams with most wins and losses"
+                    )
+    
+    except Exception as e:
+        print(e)
+    
+    
+    return fig.show()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 3. Teams with Most Goals Scored/Conceded
+
+# COMMAND ----------
+
+def create_teams_with_most_goals_scored_and_conceded_table(df):
+    try:
+        print('Using the source gold data frame to create the table for teams with most goals scored/conceded ... ')
+        print('')
+        df.createOrReplaceTempView("teams_with_most_goals_scored_and_conceded_tbl_sql")
+
+        df = spark.sql("""
+                            SELECT DISTINCT     ranking
+                                                , team
+                                                , matches_played
+                                                , wins
+                                                , draws
+                                                , losses
+                                                , goals_for
+                                                , goals_against
+                                                , goal_difference
+                                                , points 
+                        FROM (
+                                SELECT ranking
+                                       , team
+                                       , matches_played
+                                       , wins
+                                       , draws
+                                       , losses
+                                       , goals_for
+                                       , goals_against
+                                       , goal_difference
+                                       , points 
+                                       , RANK() OVER (PARTITION BY team 
+                                                           ORDER BY matches_played 
+                                                                 DESC) as rank 
+                                 FROM gold_df_sql
+                        )
+                        WHERE      rank = 1
+                        ORDER BY   ranking ASC
+
+        """)
+        df.write.format("delta").mode("overwrite").save(teams_with_most_goals_scored_and_conceded_table_gold)
+        print(f'Successfully created the delta table for teams with most goals scored/conceded in "{teams_with_most_goals_scored_and_conceded_table_gold}" location ... ')
+    
+    except Exception as e:
+        print(e)
+
+
+# COMMAND ----------
+
+def plot_teams_with_most_goals_scored_and_conceded_table(df):
+    try:
+        print('Plotting the table for teams with most goals scored and conceded using Plotly ... ')
+        print('')
+        df.createOrReplaceTempView("teams_with_most_goals_scored_and_conceded_tbl_sql")
+
+        df = spark.sql("""
+
+            SELECT * FROM teams_with_most_goals_scored_and_conceded_tbl_sql    
+
+        """)
+
+        df = df.toPandas()
+        
+        fig = px.bar(df,
+                    x="team",
+                    y="goals_for",
+                    color="team",
+                     title="Teams with most goals scored and conceded"
+                    )
+    
+    except Exception as e:
+        print(e)
+    
+    
+    return fig.show()
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Create and visualize the aggregated tables
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 1. Premier League Table 
+
+# COMMAND ----------
+
+# 1 - Create the delta table for the aggregate
+
+create_premier_league_table(gold_tbl_df)
+
+# COMMAND ----------
+
+# 2 - Read the delta table into a data frame to create an aggregate table
+
+premier_league_df = (spark
+.read
+.format("delta")
+.load(premier_league_table_gold)
+)
+
+# COMMAND ----------
+
+# 3 - Visualize the aggregate table
+
+plot_premier_league_table(premier_league_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 2. Teams with Most Wins/Losses
+
+# COMMAND ----------
+
+# 1 - Create the delta table for the aggregate
+
+create_teams_with_most_wins_and_losses_table(gold_tbl_df)
+
+# COMMAND ----------
+
+# 2 - Read the delta table into a data frame to create an aggregate table
+
+teams_with_most_wins_and_losses_df = (spark
+.read
+.format("delta")
+.load(teams_with_most_wins_and_losses_table_gold)
+)
+
+# COMMAND ----------
+
+# 3 - Visualize the aggregate table
+
+plot_teams_with_most_wins_and_losses_table(teams_with_most_wins_and_losses_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 3. Teams with Most Goals Scored/Conceded
+
+# COMMAND ----------
+
+# 1 - Create the delta table for the aggregate
+
+create_teams_with_most_goals_scored_and_conceded_table(gold_tbl_df)
+
+# COMMAND ----------
+
+# 2 - Read the delta table into a data frame to create an aggregate table
+
+teams_with_most_goals_scored_and_conceded_df = (spark
+.read
+.format("delta")
+.load(teams_with_most_goals_scored_and_conceded_table_gold)
+)
+
+# COMMAND ----------
+
+# 3 - Visualize the aggregate table
+
+plot_teams_with_most_goals_scored_and_conceded_table(gold_tbl_df)
