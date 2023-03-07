@@ -175,9 +175,11 @@ src_query = (spark.readStream
 
 # COMMAND ----------
 
-from pyspark.sql.functions import concat, lit
+from pyspark.sql.functions import concat, lit, lower, regexp_replace
 
-src_query = src_query.withColumn("team_id", concat(src_query["team"], lit("_123")))
+# src_query = src_query.withColumn("team_id", concat(lower(replace("src_query["team"]", " ", "")), lit("_123")))
+
+src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
 
 # COMMAND ----------
 
@@ -295,25 +297,52 @@ src_bronze_tbl_df = (spark
 # COMMAND ----------
 
 delta_df = DeltaTable.forPath(spark, bronze_table)
+delta_df.toDF().show()
 
 # COMMAND ----------
 
-def mergeChangesToDF(microbatchDF, batchID):
+(delta_df.alias("target_tbl")
+     .merge(microbatchDF
+            .alias("source_tbl"), "target_tbl.team_id = source_tbl.team_id")
+     .whenMatchedUpdateAll("source_tbl.team_id  <>  target_tbl.team_id")
+     .whenNotMatchedInsertAll()
+     .execute()
+    )
+
+# COMMAND ----------
+
+from pyspark.sql.functions import when
+
+
+def mergeChangesToDF(microbatchDF):
     
     # drop duplicates 
     microbatchDF = microbatchDF.dropDuplicates()
     
-    (deltadf.alias("target_tbl")
-     .merge(microbatchDF.alias("source_tbl"),
-            source
-           
-           
-           )
-    
+    (delta_df.alias("target_tbl")
+     .merge(microbatchDF
+            .alias("source_tbl"), "target_tbl.team_id = source_tbl.team_id")
+     
+     .whenMatchedUpdateAll("source_tbl.team_id  <>  target_tbl.team_id")
+     .whenNotMatchedInsertAll()
+     .execute()
     )
     
     
     return display(df)
+
+# COMMAND ----------
+
+silver_streaming_query = (src_bronze_tbl_df
+                          .writeStream
+                          .format("delta")
+                          .outputMode("append")
+                          .foreachBatch(mergeChangesToDF)
+                          .option("checkpointLocation", silver_checkpoint)
+                          .trigger(once=True)
+                          .toTable("football_db.silver_tbl") 
+
+)
 
 # COMMAND ----------
 
