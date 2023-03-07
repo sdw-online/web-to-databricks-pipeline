@@ -67,6 +67,10 @@ if __name__=="__main__":
 load_dotenv()
 
 
+# Add a flag for saving CSV files to the cloud 
+WRITE_TO_CLOUD = False
+
+
 
 # Set up environment variables
 
@@ -86,7 +90,8 @@ s3_client                                           =       boto3.client('s3', a
 
 # Specify the constants for the scraper 
 local_target_path               =   os.path.abspath('scraper/temp_storage')
-match_dates                     =   ['2022-Sep-01', '2022-Oct-01', '2022-Nov-01', '2022-Dec-01', '2023-Jan-01', '2023-Feb-01', '2023-Mar-01', '2023-Mar-06']
+match_dates                     =   ['2022-Sep-01', '2022-Oct-01', '2022-Nov-01', '2022-Dec-01', '2023-Jan-01', '2023-Feb-01', '2023-Mar-01', '2023-Mar-07']
+# match_dates                     =   ['2022-Sep-01', '2023-Mar-07']
 table_counter                   =   0
 
 
@@ -146,7 +151,7 @@ for match_date in match_dates:
 
         # Use HTML content to create data frame for the Premier League table standings 
         prem_league_table_df                    =   pd.DataFrame(data=scraped_content[1:], columns=[scraped_content[0]])
-        prem_league_table_df['match-date']      =   match_date
+        prem_league_table_df['match_date']      =   match_date
         prem_league_table_file                  =   f'prem_league_table_{match_date}.csv'
         
         S3_KEY                                       =       S3_FOLDER + prem_league_table_file
@@ -156,17 +161,26 @@ for match_date in match_dates:
         root_logger.debug(prem_league_table_df)
 
         # Write data frame to CSV file
-        prem_league_table_df.to_csv(CSV_BUFFER, index=False)
-        RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
 
-        # Load Postgres table to S3
-        s3_client.put_object(Bucket=S3_BUCKET,
-                    Key=S3_KEY,
-                    Body=RAW_TABLE_ROWS_AS_STRING_VALUES
-                    )
-        root_logger.info("")
-        root_logger.info(f'>>>>   Successfully written and loaded "{prem_league_table_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
-        root_logger.debug(f'>>>>   ')
+
+        if WRITE_TO_CLOUD:
+            prem_league_table_df.to_csv(CSV_BUFFER, index=False)
+            RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
+
+            # Load Postgres table to S3
+            s3_client.put_object(Bucket=S3_BUCKET,
+                        Key=S3_KEY,
+                        Body=RAW_TABLE_ROWS_AS_STRING_VALUES
+                        )
+            root_logger.info("")
+            root_logger.info(f'>>>>   Successfully written and loaded "{prem_league_table_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
+            root_logger.debug(f'>>>>   ')
+
+        else:
+            prem_league_table_df.to_csv(f'{local_target_path}/{prem_league_table_file}', index=False)
+            root_logger.info("")
+            root_logger.info(f'>>>>   Successfully written and loaded "{prem_league_table_file}" file to local target location...')
+            root_logger.debug(f'>>>>   ')
 
 
 
@@ -186,4 +200,4 @@ for match_date in match_dates:
 
 
     except Exception as e:
-        root_logger.debug(e)
+        root_logger.error(e)
