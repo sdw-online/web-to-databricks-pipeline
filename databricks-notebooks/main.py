@@ -65,11 +65,13 @@ gold_checkpoint = f"{gold_output_location}/_checkpoint"
 
 
 
-
 # Standard Medallion Tables
 bronze_table = bronze_output_location + "tables/"
 silver_table = silver_output_location + "tables/"
 gold_table = gold_output_location + "tables/base_file/"
+
+
+
 
 # COMMAND ----------
 
@@ -78,14 +80,29 @@ gold_table = gold_output_location + "tables/base_file/"
 
 # COMMAND ----------
 
-# Delete checkpoint location
-dbutils.fs.rm(bronze_checkpoint, True)
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Clear objects for this session
+
+# COMMAND ----------
+
+# Delete checkpoint locations
+
+
+DELETE_CHECKPOINT = True
+# DELETE_CHECKPOINT = False
+
+
+if DELETE_CHECKPOINT:
+    dbutils.fs.rm(bronze_checkpoint, True)
+    dbutils.fs.rm(silver_checkpoint, True)
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC DROP TABLE IF EXISTS football_db.bronze_tbl
+# MAGIC DROP TABLE IF EXISTS football_db.bronze_tbl;
+# MAGIC DROP TABLE IF EXISTS football_db.silver_tbl;
 
 # COMMAND ----------
 
@@ -119,11 +136,11 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 league_table_schema = StructType([
     
-    StructField("Pos", IntegerType(), True),
-    StructField("Team", StringType(), True),
-    StructField("P", IntegerType(), True),
-    StructField("W", IntegerType(), True),
-    StructField("D", IntegerType(), True),
+    StructField("Pos", IntegerType(), False),
+    StructField("Team", StringType(), False),
+    StructField("P", IntegerType(), False),
+    StructField("W", IntegerType(), False),
+    StructField("D", IntegerType(), False),
     StructField("L", IntegerType(), True),
     StructField("GF", IntegerType(), True),
     StructField("GA", IntegerType(), True),
@@ -169,6 +186,22 @@ src_query = (spark.readStream
 
 # COMMAND ----------
 
+display(src_query)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Add unique ID column 
+
+# COMMAND ----------
+
+from pyspark.sql.functions import concat, lit, lower, regexp_replace
+
+src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
+
+# COMMAND ----------
+
 bronze_streaming_query = (src_query
                           .writeStream
                           .format("delta") 
@@ -181,6 +214,14 @@ bronze_streaming_query = (src_query
                           .trigger(once=True)
                           .toTable("football_db.bronze_tbl") 
                          )
+
+# COMMAND ----------
+
+from time import sleep
+
+
+# Add simulated delay to process incoming rows into tables 
+sleep(3)
 
 # COMMAND ----------
 
@@ -250,6 +291,7 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
      .write
      .format("delta")
      .mode("overwrite")
+     .option("mergeSchema", True)
      .save(bronze_table)
 )
 
@@ -272,19 +314,175 @@ from pyspark import StorageLevel
 
 # COMMAND ----------
 
-# Load 
-src_bronze_tbl_df = (spark
-                 .readStream
-                 .format("delta")
-                 .load(bronze_table)
-                )
+# Set up target table 
+
+target_delta_tbl = DeltaTable.forPath(spark, bronze_table)
+target_delta_tbl.toDF().show()
 
 # COMMAND ----------
 
-def mergeChangesToDF(microbatchDF, batchID):
-    df = DeltaTable.forPath(spark, bronze_table)
-    return display(df)
+# Set up source table 
+
+source_delta_tbl = spark.read.table("football_db.bronze_tbl")
+source_delta_tbl.show()
 
 # COMMAND ----------
 
-mergeChangesToDF(src_bronze_tbl_df)
+from pyspark.sql.functions import when, col
+
+
+def mergeChangesToDF(df, batchID):
+    
+    # Create Delta table if it doesnt exist
+    DeltaTable.createIfNotExists(spark, "football_db.bronze_tbl")
+    
+    # Specify the source and target tables
+    target_tbl = DeltaTable.forPath(spark, bronze_table)
+    source_tbl = df.alias("source_tbl")
+    
+
+    
+    # Set condition for joining the tables 
+    join_condition = target_tbl.team_id == source_tbl.team_id
+    
+    
+    # Define the update statement for when the rows match
+    update_statement = {
+        "Pts": source_tbl.Pts,
+        "W": source_tbl.W,
+        "D": source_tbl.D,
+        "L": source_tbl.L,
+        "GF": source_tbl.GF,
+        "GA": source_tbl.GA,
+        "W.1": source_tbl["W.1"],
+        "D.1": source_tbl["D.1"],
+        "L.1": source_tbl["L.1"],
+        "GF.1": source_tbl["GF.1"],
+        "GA.1": source_tbl["GA.1"],
+        "GD": source_tbl.GD,
+        "match-date": source_tbl["match-date"],
+        "update_flag": lit("U")  # Add a flag column for updates
+    }
+
+    # Define the insert statement for when the rows don't match
+    insert_statement = {
+        "Pos": source_tbl.Pos,
+        "Team": source_tbl.Team,
+        "P": source_tbl.P,
+        "W": source_tbl.W,
+        "D": source_tbl.D,
+        "L": source_tbl.L,
+        "GF": source_tbl.GF,
+        "GA": source_tbl.GA,
+        "W.1": source_tbl["W.1"],
+        "D.1": source_tbl["D.1"],
+        "L.1": source_tbl["L.1"],
+        "GF.1": source_tbl["GF.1"],
+        "GA.1": source_tbl["GA.1"],
+        "GD": source_tbl.GD,
+        "Pts": source_tbl.Pts,
+        "match-date": source_tbl["match-date"],
+        "team_id": source_tbl.team_id,
+        "update_flag": lit("I")  # Add a flag column for inserts
+    }
+    
+    
+    # Perform the Delta merge operation
+    (target_tbl
+     .merge(
+         source_tbl, join_condition)
+     .whenMatchedUpdate(
+         condition=join_condition,
+         set=update_statement)
+     .whenNotMatchedInsertAll(
+         values=insert_statement)
+     .orderBy("Pos", "P")
+     .execute() 
+    )
+    
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Start silver streaming query
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl
+
+# COMMAND ----------
+
+silver_streaming_df_1 = (spark
+                             .readStream
+                             .format("delta")
+                             .load(bronze_table)
+)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Apply transformation logic to streaming dataframes
+
+# COMMAND ----------
+
+# Drop duplicates from incoming source table  
+# df = df.dropDuplicates(["team_id"])
+
+# COMMAND ----------
+
+# Rename columns 
+
+silver_streaming_df_1 =  (
+        silver_streaming_df_1.withColumnRenamed("Pos", "ranking")
+            .withColumnRenamed("Team", "team")
+            .withColumnRenamed("P", "matches_played")
+            .withColumnRenamed("Pts", "points")
+            .withColumnRenamed("W", "win_home")
+            .withColumnRenamed("D", "draw_home")
+            .withColumnRenamed("L", "loss_home")
+            .withColumnRenamed("GF", "goals_for_home")
+            .withColumnRenamed("GA", "goals_against_home")
+            .withColumnRenamed("W.1", "win_away")
+            .withColumnRenamed("D.1", "draw_away")
+            .withColumnRenamed("L.1", "loss_away")
+            .withColumnRenamed("GF.1", "goals_for_away")
+            .withColumnRenamed("GA.1", "goals_against_away")
+            .withColumnRenamed("GD", "goal_difference")
+         )
+
+# COMMAND ----------
+
+# Filter league standings to records with the most played games for each team 
+# silver_streaming_df_1 = silver_streaming_df_1.orderBy(col("P").desc())
+
+# COMMAND ----------
+
+# Select the latest 20 records for the league standings
+silver_streaming_df_1 = silver_streaming_df_1.limit(20)
+
+# COMMAND ----------
+
+silver_streaming_query = (silver_streaming_df_1
+                          .writeStream
+                          .format("delta")
+                          .outputMode("append")
+                          .foreachBatch(mergeChangesToDF)
+                          .option("checkpointLocation", silver_checkpoint)
+                          .option("mergeSchema", True)
+                          .trigger(once=True)
+                          .toTable("football_db.silver_tbl") 
+)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC SELECT * FROM football_db.silver_tbl
+
+# COMMAND ----------
+
+
