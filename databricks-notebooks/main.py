@@ -65,11 +65,13 @@ gold_checkpoint = f"{gold_output_location}/_checkpoint"
 
 
 
-
 # Standard Medallion Tables
 bronze_table = bronze_output_location + "tables/"
 silver_table = silver_output_location + "tables/"
 gold_table = gold_output_location + "tables/base_file/"
+
+
+
 
 # COMMAND ----------
 
@@ -78,8 +80,16 @@ gold_table = gold_output_location + "tables/base_file/"
 
 # COMMAND ----------
 
-# Delete checkpoint location
-dbutils.fs.rm(bronze_checkpoint, True)
+# Delete checkpoint locations
+
+
+DELETE_CHECKPOINT = True
+# DELETE_CHECKPOINT = False
+
+
+if DELETE_CHECKPOINT:
+    dbutils.fs.rm(bronze_checkpoint, True)
+    dbutils.fs.rm(silver_checkpoint, True)
 
 # COMMAND ----------
 
@@ -198,6 +208,14 @@ bronze_streaming_query = (src_query
 
 # COMMAND ----------
 
+from time import sleep
+
+
+# Add simulated delay to process incoming rows into tables 
+sleep(3)
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC 
 # MAGIC ### List the objects in the Delta folder in DBFS
@@ -287,15 +305,6 @@ from pyspark import StorageLevel
 
 # COMMAND ----------
 
-# Load 
-src_bronze_tbl_df = (spark
-                 .readStream
-                 .format("delta")
-                 .load(bronze_table)
-                )
-
-# COMMAND ----------
-
 # Set up target table 
 
 target_delta_tbl = DeltaTable.forPath(spark, bronze_table)
@@ -310,51 +319,104 @@ source_delta_tbl.show()
 
 # COMMAND ----------
 
-# Add column for adding flags to indentify updates or inserts  
-source_delta_tbl = source_delta_tbl.withColumn("upsert_flag", lit("I"))
-
-# COMMAND ----------
-
-display(source_delta_tbl)
-
-# COMMAND ----------
-
-target_delta_tbl_df = target_delta_tbl.toDF()
-source_delta_tbl = source_delta_tbl.join(target_delta_tbl_df, ["team_id"], "left").withColumn("upsert_flag", when(col("count") > 0, "U").otherwise("I"))
-
-# COMMAND ----------
-
-from pyspark.sql.functions import when, col
-
-# COMMAND ----------
-
 from pyspark.sql.functions import when, col
 
 
-def mergeChangesToDF(microbatchDF, batchID):
+def mergeChangesToDF(df, batchID):
     
-    delta_df = DeltaTable.forPath(spark, bronze_table)
-    
-    # Set condition for MERGE 
-    merge_condition = "target_tbl.team_id = source_tbl.team_id"
+    # Filter league standings to records with the most played games for each team 
+    df = df.orderBy(col("P").desc())
     
     
     # Drop duplicates from incoming source table  
-    microbatchDF = microbatchDF.dropDuplicates(["team_id", "P"])
+    df = df.dropDuplicates(["team_id"])
     
     
-    # Perform the UPSERT 
-    (delta_df.alias("target_tbl")
-     .merge(microbatchDF
-            .alias("source_tbl"), merge_condition)
-     
-     .whenMatchedUpdateAll("source_tbl.team_id  <>  target_tbl.team_id")
-     .whenNotMatchedInsertAll()
-     .execute()
+    # Create Delta table if it doesnt exist
+    DeltaTable.createIfNotExists(spark, "football_db.bronze_tbl")
+    
+    target_tbl = DeltaTable.forPath(spark, bronze_table)
+    source_tbl = df.alias("source_tbl")
+    
+
+    
+    # Set condition for joining the tables 
+    join_condition = target_tbl.team_id == source_tbl.team_id
+    
+    
+    # Define the update statement for when the rows match
+    update_statement = {
+        "Pts": source_tbl.Pts,
+        "W": source_tbl.W,
+        "D": source_tbl.D,
+        "L": source_tbl.L,
+        "GF": source_tbl.GF,
+        "GA": source_tbl.GA,
+        "W.1": source_tbl["W.1"],
+        "D.1": source_tbl["D.1"],
+        "L.1": source_tbl["L.1"],
+        "GF.1": source_tbl["GF.1"],
+        "GA.1": source_tbl["GA.1"],
+        "GD": source_tbl.GD,
+        "match-date": source_tbl["match-date"],
+        "update_flag": lit("U")  # Add a flag column for updates
+    }
+
+    # Define the insert statement for when the rows don't match
+    insert_statement = {
+        "Pos": source_tbl.Pos,
+        "Team": source_tbl.Team,
+        "P": source_tbl.P,
+        "W": source_tbl.W,
+        "D": source_tbl.D,
+        "L": source_tbl.L,
+        "GF": source_tbl.GF,
+        "GA": source_tbl.GA,
+        "W.1": source_tbl["W.1"],
+        "D.1": source_tbl["D.1"],
+        "L.1": source_tbl["L.1"],
+        "GF.1": source_tbl["GF.1"],
+        "GA.1": source_tbl["GA.1"],
+        "GD": source_tbl.GD,
+        "Pts": source_tbl.Pts,
+        "match-date": source_tbl["match-date"],
+        "team_id": source_tbl.team_id,
+        "update_flag": lit("I")  # Add a flag column for inserts
+    }
+    
+    
+    # Perform the Delta merge operation
+    (target_tbl
+     .merge(
+         source_tbl, join_condition)
+     .whenMatchedUpdate(
+         condition=join_condition,
+         set=update_statement)
+     .whenNotMatchedInsertAll(
+         values=insert_statement)
+     .execute() 
     )
     
-    
-    return display(df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Start silver streaming query
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl
+
+# COMMAND ----------
+
+src_bronze_tbl_df = (spark
+                 .readStream
+                 .format("delta")
+                 .load(bronze_table)
+                )
 
 # COMMAND ----------
 
@@ -364,11 +426,15 @@ silver_streaming_query = (src_bronze_tbl_df
                           .outputMode("append")
                           .foreachBatch(mergeChangesToDF)
                           .option("checkpointLocation", silver_checkpoint)
+                          .option("mergeSchema", True)
                           .trigger(once=True)
                           .toTable("football_db.silver_tbl") 
-
 )
 
 # COMMAND ----------
 
-mergeChangesToDF(src_bronze_tbl_df)
+
+
+# COMMAND ----------
+
+
