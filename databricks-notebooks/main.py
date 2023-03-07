@@ -296,22 +296,39 @@ src_bronze_tbl_df = (spark
 
 # COMMAND ----------
 
-delta_df = DeltaTable.forPath(spark, bronze_table)
-delta_df.toDF().show()
+# Set up target table 
+
+target_delta_tbl = DeltaTable.forPath(spark, bronze_table)
+target_delta_tbl.toDF().show()
 
 # COMMAND ----------
 
-(delta_df.alias("target_tbl")
-     .merge(microbatchDF
-            .alias("source_tbl"), "target_tbl.team_id = source_tbl.team_id")
-     .whenMatchedUpdateAll("source_tbl.team_id  <>  target_tbl.team_id")
-     .whenNotMatchedInsertAll()
-     .execute()
-    )
+# Set up source table 
+
+source_delta_tbl = spark.read.table("football_db.bronze_tbl")
+source_delta_tbl.show()
 
 # COMMAND ----------
 
-from pyspark.sql.functions import when
+# Add column for adding flags to indentify updates or inserts  
+source_delta_tbl = source_delta_tbl.withColumn("upsert_flag", lit("I"))
+
+# COMMAND ----------
+
+display(source_delta_tbl)
+
+# COMMAND ----------
+
+target_delta_tbl_df = target_delta_tbl.toDF()
+source_delta_tbl = source_delta_tbl.join(target_delta_tbl_df, ["team_id"], "left").withColumn("upsert_flag", when(col("count") > 0, "U").otherwise("I"))
+
+# COMMAND ----------
+
+from pyspark.sql.functions import when, col
+
+# COMMAND ----------
+
+from pyspark.sql.functions import when, col
 
 
 def mergeChangesToDF(microbatchDF, batchID):
