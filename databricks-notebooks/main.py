@@ -71,6 +71,12 @@ silver_table = silver_output_location + "tables/"
 gold_table = gold_output_location + "tables/base_file/"
 
 
+# Aggregations
+
+premier_league_table_gold                               =   gold_table + 'premier_league_table/delta_file'
+teams_with_most_wins_and_losses_table_gold              =   gold_table + 'teams_with_most_wins_and_losses/delta_file'
+teams_with_most_goals_scored_and_conceded_table_gold    =   gold_table + 'teams_with_most_goals_scored_and_conceded/delta_file'
+
 
 
 # COMMAND ----------
@@ -558,9 +564,25 @@ silver_tbl_df = spark.read.table("football_db.silver_tbl")
 # MAGIC 
 # MAGIC 
 # MAGIC ## Gold zone
-# MAGIC * xxxxxxxxx --- [ ]
-# MAGIC * xxxxxxxxx --- [ ]
-# MAGIC * xxxxxxxxx --- [ ]
+# MAGIC * Use silver delta table as source for data frame for gold zone --- [x]
+# MAGIC * Convert gold data frame to temp view  --- [x] 
+# MAGIC * Persist dataframe to cache  --- [x]
+# MAGIC * Drop duplicates from data frame  --- [ ]
+# MAGIC * Use aggregate operations to summarize table standings data  --- [ ]
+# MAGIC * Create and visualize the aggregate tables  --- [x]
+# MAGIC 
+# MAGIC 
+# MAGIC **Create the following tables:**
+# MAGIC * 1. Premier League table
+# MAGIC * 2. Teams with Most Wins/Losses
+# MAGIC * 3. Teams with Most Goals Scored/Conceded
+# MAGIC * 4. Team Ranking by Month
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC 
+# MAGIC ### Use silver delta table as source for gold delta table
 
 # COMMAND ----------
 
@@ -572,17 +594,129 @@ gold_tbl_df = (spark
 
 # COMMAND ----------
 
+# MAGIC %md 
+# MAGIC 
+# MAGIC ### Convert gold data frame to temp view
+
+# COMMAND ----------
+
 gold_tbl_df.createOrReplaceTempView("gold_df_sql")
-# gold_tbl_df = spark.sql(""" SELECT * FROM gold_df_sql ORDER BY 2, 1 """)
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC 
+# MAGIC ### Persist dataframe to cache
+
+# COMMAND ----------
+
 gold_tbl_df.persist(StorageLevel.MEMORY_ONLY)
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC 
+# MAGIC ### Drop duplicates from data frame
+
+# COMMAND ----------
+
 gold_tbl_df = gold_tbl_df.dropDuplicates()
 display(gold_tbl_df)
 
 # COMMAND ----------
 
-# MAGIC %sql 
+# MAGIC %md
 # MAGIC 
-# MAGIC SELECT ranking, team, matches_played, wins, draws, losses, goals_for, goals_against, goal_difference, points  FROM gold_df_sql 
+# MAGIC ### Use aggregate operations to summarize table standings data
+
+# COMMAND ----------
+
+import plotly.express as px
+import pandas as pd
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 1. Premier League Table 
+
+# COMMAND ----------
+
+def create_premier_league_table(df):
+    try:
+        print('Creating the Premier League table ... ')
+        print('')
+        df.createOrReplaceTempView("premier_league_tbl_sql")
+
+        df = spark.sql("""
+                            SELECT DISTINCT     ranking
+                                            , team
+                                            , matches_played
+                                            , wins
+                                            , draws
+                                            , losses
+                                            , goals_for
+                                            , goals_against
+                                            , goal_difference
+                                            , points 
+                        FROM (
+                                SELECT ranking
+                                       , team
+                                       , matches_played
+                                       , wins
+                                       , draws
+                                       , losses
+                                       , goals_for
+                                       , goals_against
+                                       , goal_difference
+                                       , points 
+                                       , RANK() OVER (PARTITION BY team 
+                                                           ORDER BY matches_played 
+                                                                 DESC) as rank 
+                                 FROM gold_df_sql
+                        )
+                        WHERE      rank = 1
+                        ORDER BY   ranking ASC
+
+        """)
+        df.write.format("delta").mode("overwrite").save(premier_league_table_gold)
+        print('Successfully created the Premier League table')
+    
+    except Exception as e:
+        print(e)
+
+
+# COMMAND ----------
+
+def plot_premier_league_table(df):
+    try:
+        print('Plotting the Premier League table using Plotly ... ')
+        print('')
+        df.createOrReplaceTempView("premier_league_tbl_sql")
+
+        df = spark.sql("""
+
+            SELECT * FROM premier_league_tbl_sql    
+
+        """)
+
+        df = df.toPandas()
+        
+        fig = px.bar(df,
+                    x="team",
+                    y="wins",
+                     title="Premier League Table"
+                     
+                    )
+    
+    
+    except Exception as e:
+        print(e)
+    
+    
+    return fig.show()
+    
+    
 
 # COMMAND ----------
 
@@ -609,12 +743,219 @@ display(gold_tbl_df)
 # MAGIC                , goals_against
 # MAGIC                , goal_difference
 # MAGIC                , points 
-# MAGIC                , RANK() OVER (PARTITION BY team ORDER BY matches_played DESC) as rank 
+# MAGIC                , RANK() OVER (PARTITION BY team 
+# MAGIC                                    ORDER BY matches_played 
+# MAGIC                                          DESC) as rank 
 # MAGIC          FROM gold_df_sql
 # MAGIC )
 # MAGIC WHERE      rank = 1
 # MAGIC ORDER BY   ranking ASC
 
 # COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 2. Teams with Most Wins/Losses
+
+# COMMAND ----------
+
+def create_teams_with_most_wins_and_losses_table(df):
+    try:
+        print('Creating the table for teams with most wins/losses ... ')
+        print('')
+        df.createOrReplaceTempView("teams_with_most_wins_and_losses_tbl_sql")
+
+        df = spark.sql("""
+                            SELECT DISTINCT     ranking
+                                                , team
+                                                , matches_played
+                                                , wins
+                                                , draws
+                                                , losses
+                                                , goals_for
+                                                , goals_against
+                                                , goal_difference
+                                                , points 
+                        FROM (
+                                SELECT ranking
+                                       , team
+                                       , matches_played
+                                       , wins
+                                       , draws
+                                       , losses
+                                       , goals_for
+                                       , goals_against
+                                       , goal_difference
+                                       , points 
+                                       , RANK() OVER (PARTITION BY team 
+                                                           ORDER BY matches_played 
+                                                                 DESC) as rank 
+                                 FROM gold_df_sql
+                        )
+                        WHERE      rank = 1
+                        ORDER BY   ranking ASC
+
+        """)
+        df.write.format("delta").mode("overwrite").save(teams_with_most_wins_and_losses_table_gold)
+        print('Successfully created the table for teams with most wins/losses ... ')
+    
+    except Exception as e:
+        print(e)
+
+
+# COMMAND ----------
+
+def plot_teams_with_most_wins_and_losses_table(df):
+    try:
+        print('Plotting the table for teams with most wins and losses using Plotly ... ')
+        print('')
+        df.createOrReplaceTempView("teams_with_most_wins_and_losses_tbl_sql")
+
+        df = spark.sql("""
+
+            SELECT * FROM teams_with_most_wins_and_losses_tbl_sql    
+
+        """)
+
+        df = df.toPandas()
+        
+        fig = px.bar(df,
+                    x="team",
+                    y="wins",
+                    color="team",
+                     title="Teams with most wins and losses"
+                    )
+    
+    except Exception as e:
+        print(e)
+    
+    
+    return fig.show()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 3. Teams with Most Goals Scored/Conceded
+
+# COMMAND ----------
+
+def create_teams_with_most_goals_scored_and_conceded_table(df):
+    try:
+        print('Creating the table for teams with most goals scored/conceded ... ')
+        print('')
+        df.createOrReplaceTempView("teams_with_most_goals_scored_and_conceded_tbl_sql")
+
+        df = spark.sql("""
+                            SELECT DISTINCT     ranking
+                                                , team
+                                                , matches_played
+                                                , wins
+                                                , draws
+                                                , losses
+                                                , goals_for
+                                                , goals_against
+                                                , goal_difference
+                                                , points 
+                        FROM (
+                                SELECT ranking
+                                       , team
+                                       , matches_played
+                                       , wins
+                                       , draws
+                                       , losses
+                                       , goals_for
+                                       , goals_against
+                                       , goal_difference
+                                       , points 
+                                       , RANK() OVER (PARTITION BY team 
+                                                           ORDER BY matches_played 
+                                                                 DESC) as rank 
+                                 FROM gold_df_sql
+                        )
+                        WHERE      rank = 1
+                        ORDER BY   ranking ASC
+
+        """)
+        df.write.format("delta").mode("overwrite").save(teams_with_most_goals_scored_and_conceded_table_gold)
+        print('Successfully created the table for teams with most goals scored/conceded ... ')
+    
+    except Exception as e:
+        print(e)
+
+
+# COMMAND ----------
+
+def plot_teams_with_most_goals_scored_and_conceded_table(df):
+    try:
+        print('Plotting the table for teams with most goals scored and conceded using Plotly ... ')
+        print('')
+        df.createOrReplaceTempView("teams_with_most_goals_scored_and_conceded_tbl_sql")
+
+        df = spark.sql("""
+
+            SELECT * FROM teams_with_most_goals_scored_and_conceded_tbl_sql    
+
+        """)
+
+        df = df.toPandas()
+        
+        fig = px.bar(df,
+                    x="team",
+                    y="wins",
+                    color="team",
+                     title="Teams with most goals scored and conceded"
+                    )
+    
+    except Exception as e:
+        print(e)
+    
+    
+    return fig.show()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### 4. Team Ranking by Month
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ## Create and visualize the aggregated tables
+
+# COMMAND ----------
+
+# 1
+create_premier_league_table(gold_tbl_df)
+plot_premier_league_table(gold_tbl_df)
+
+# 2
+create_teams_with_most_wins_and_losses_table(gold_tbl_df)
+plot_teams_with_most_wins_and_losses_table(gold_tbl_df)
+
+# 3
+
+create_teams_with_most_goals_scored_and_conceded_table(gold_tbl_df)
+plot_teams_with_most_goals_scored_and_conceded_table(gold_tbl_df)
+
+# 4 
 
 
