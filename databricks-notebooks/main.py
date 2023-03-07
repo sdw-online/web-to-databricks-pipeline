@@ -31,36 +31,55 @@
 
 # COMMAND ----------
 
-client_id                      =    dbutils.secrets.get(scope="azure", key="client_id")
-client_secret                  =    dbutils.secrets.get(scope="azure", key="client_secret")
-tenant_id                      =    dbutils.secrets.get(scope="azure", key="tenant_id")
-storage_account_name           =    dbutils.secrets.get(scope="azure", key="storage_account_name")
-container_name                 =    dbutils.secrets.get(scope="azure", key="container_name")
-sas_token                      =    dbutils.secrets.get(scope="azure", key="sas_token")
-sas_connection_string          =    dbutils.secrets.get(scope="azure", key="sas_connection_string")
-blob_service_sas_url           =    dbutils.secrets.get(scope="azure", key="blob_service_sas_url")
+client_id = dbutils.secrets.get(scope="azure", key="client_id")
+client_secret = dbutils.secrets.get(scope="azure", key="client_secret")
+tenant_id = dbutils.secrets.get(scope="azure", key="tenant_id")
+storage_account_name = dbutils.secrets.get(scope="azure", key="storage_account_name")
+container_name = dbutils.secrets.get(scope="azure", key="container_name")
+sas_token = dbutils.secrets.get(scope="azure", key="sas_token")
+sas_connection_string = dbutils.secrets.get(scope="azure", key="sas_connection_string")
+blob_service_sas_url = dbutils.secrets.get(scope="azure", key="blob_service_sas_url")
 
 
 source_path = f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net"
 mount_point = f"/mnt/{container_name}-dbfs"
 
 
+# Source locations
+football_data_path_for_src_csv_files    = f"{mount_point}"
+football_data_path_for_src_delta_files  = f"{mount_point}/src/delta"
 
-football_data_path_src = f"{mount_point}"
-football_data_path_dbfs_tgt = f"/mnt/delta/"
-football_data_path_azure_tgt = f"{mount_point}/delta/"
 
-checkpoint_location = f"{football_data_path_dbfs_tgt}/checkpoint"
+# Target locations
+football_data_path_for_tgt_delta_files = f"{mount_point}/tgt/delta/league_standings"
+
+bronze_output_location  = f"{football_data_path_for_tgt_delta_files}/bronze"
+silver_output_location  = f"{football_data_path_for_tgt_delta_files}/silver"
+gold_output_location    = f"{football_data_path_for_tgt_delta_files}/gold"
+
+
+# Checkpoint
+bronze_checkpoint = f"{bronze_output_location}/_checkpoint"
+silver_checkpoint = f"{silver_output_location}/_checkpoint"
+gold_checkpoint = f"{gold_output_location}/_checkpoint"
+
+
+
+
+# Standard Medallion Tables
+bronze_table = bronze_output_location + "tables/"
+silver_table = silver_output_location + "tables/"
+gold_table = gold_output_location + "tables/base_file/"
 
 # COMMAND ----------
 
 # List the objects in the DBFS mount point 
-# dbutils.fs.ls(f"{football_data_path_src}")
+# dbutils.fs.ls(f"{football_data_path_for_src_csv_files}")
 
 # COMMAND ----------
 
 # Delete checkpoint location
-dbutils.fs.rm(checkpoint_location, True)
+dbutils.fs.rm(bronze_checkpoint, True)
 
 # COMMAND ----------
 
@@ -142,13 +161,10 @@ league_table_schema = StructType([
 src_query = (spark.readStream
         .format("csv")
         .option("header", "true")
-#         .option('dateFormat', 'dd/MM/yyyy')
-        .option("dateFormat", "yyyy-MMM-dd")
         .option("inferSchema", "false")
         .option("maxFilesPerTrigger", 2)
-        .option('dateFormat', 'yyyy-MMM-dd')
         .schema(league_table_schema)
-        .load(football_data_path_src)
+        .load(football_data_path_for_src_csv_files)
      )
 
 # COMMAND ----------
@@ -156,7 +172,7 @@ src_query = (spark.readStream
 bronze_streaming_query = (src_query
                           .writeStream
                           .format("delta") 
-                          .option("checkpointLocation", checkpoint_location)
+                          .option("checkpointLocation", bronze_checkpoint)
                           .option("enforceSchema", True)
                           .option("mergeSchema", False)
                           .option("ignoreChanges", False)
@@ -175,7 +191,33 @@ bronze_streaming_query = (src_query
 # COMMAND ----------
 
 # List the objects in the DBFS mount point where the Delta files reside
-dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
+dbutils.fs.ls(f"{football_data_path_for_tgt_delta_files}")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Display the data profiling metrics
+
+# COMMAND ----------
+
+# bronze_streaming_query.recentProgress
+
+# COMMAND ----------
+
+if len(bronze_streaming_query.recentProgress) > 0:
+    no_of_incoming_rows = bronze_streaming_query.recentProgress[0]['numInputRows']
+    query_name = bronze_streaming_query.recentProgress[0]['name']
+    
+    
+    print(f'=================== DATA PROFILING METRICS ===================')
+    print(f'==============================================================')
+    print(f'')
+    print(f'Bronze query name:                       {query_name}')
+    print(f'New rows inserted into bronze table:     {no_of_incoming_rows}')
+else:
+    print('No changes appeared in the source directory')
+    
 
 # COMMAND ----------
 
@@ -195,11 +237,21 @@ dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC select * from football_db.bronze_tbl
+# MAGIC SELECT * FROM football_db.bronze_tbl
 
 # COMMAND ----------
 
+# Convert Hive table into delta table 
+bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 
+
+# Save bronze_tbl_df to delta folder
+(bronze_tbl_df
+     .write
+     .format("delta")
+     .mode("overwrite")
+     .save(bronze_table)
+)
 
 # COMMAND ----------
 
@@ -207,10 +259,32 @@ dbutils.fs.ls(f"{football_data_path_dbfs_tgt}")
 # MAGIC 
 # MAGIC 
 # MAGIC ## Silver zone
+# MAGIC * Use bronze table as source table for silver table
 # MAGIC * Perform MERGE operation between source and target tables --- [ ]
 # MAGIC * Convert transformation intents into PySpark logic
 # MAGIC * xxxxxxxxx --- [ ]
 
 # COMMAND ----------
 
+from delta.tables import *
+import pyspark.sql.functions as func
+from pyspark import StorageLevel 
 
+# COMMAND ----------
+
+# Load 
+src_bronze_tbl_df = (spark
+                 .readStream
+                 .format("delta")
+                 .load(bronze_table)
+                )
+
+# COMMAND ----------
+
+def mergeChangesToDF(microbatchDF, batchID):
+    df = DeltaTable.forPath(spark, bronze_table)
+    return display(df)
+
+# COMMAND ----------
+
+mergeChangesToDF(src_bronze_tbl_df)
