@@ -327,6 +327,7 @@ def mergeChangesToDF(df, batchID):
     # Create Delta table if it doesnt exist
     DeltaTable.createIfNotExists(spark, "football_db.bronze_tbl")
     
+    # Specify the source and target tables
     target_tbl = DeltaTable.forPath(spark, bronze_table)
     source_tbl = df.alias("source_tbl")
     
@@ -390,37 +391,6 @@ def mergeChangesToDF(df, batchID):
      .execute() 
     )
     
-    
-    # Apply transformations 
-    
-    # Filter league standings to records with the most played games for each team 
-    df = df.orderBy(col("P").desc())
-    
-    
-    # Drop duplicates from incoming source table  
-    df = df.dropDuplicates(["team_id"])
-    
-    df = (
-        df.withColumnRenamed("Pts", "points")
-        .withColumnRenamed("W", "win_home")
-        .withColumnRenamed("D", "draw_home")
-        .withColumnRenamed("L", "loss_home")
-        .withColumnRenamed("GF", "goals_for_home")
-        .withColumnRenamed("GA", "goals_against_home")
-        .withColumnRenamed("W.1", "win_away")
-        .withColumnRenamed("D.1", "draw_away")
-        .withColumnRenamed("L.1", "loss_away")
-        .withColumnRenamed("GF.1", "goals_for_away")
-        .withColumnRenamed("GA.1", "goals_against_away")
-        .withColumnRenamed("GF", "goal_difference")
-         )
-    
-    # Select the latest 20 records for the league standings
-    df = df.limit(20)
- 
-    
-    
-    
 
 # COMMAND ----------
 
@@ -436,17 +406,58 @@ def mergeChangesToDF(df, batchID):
 
 # COMMAND ----------
 
-sleep(3)
-
-src_bronze_tbl_df = (spark
-                 .readStream
-                 .format("delta")
-                 .load(bronze_table)
-                )
+silver_streaming_df_1 = (spark
+                             .readStream
+                             .format("delta")
+                             .load(bronze_table)
+)
 
 # COMMAND ----------
 
-silver_streaming_query = (src_bronze_tbl_df
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Apply transformation logic to streaming dataframes
+
+# COMMAND ----------
+
+# Drop duplicates from incoming source table  
+df = df.dropDuplicates(["team_id"])
+
+# COMMAND ----------
+
+# Rename columns 
+
+silver_streaming_df_1 =  (
+        silver_streaming_df_1.withColumnRenamed("Pos", "ranking")
+            .withColumnRenamed("Team", "team")
+            .withColumnRenamed("P", "matches_played")
+            .withColumnRenamed("Pts", "points")
+            .withColumnRenamed("W", "win_home")
+            .withColumnRenamed("D", "draw_home")
+            .withColumnRenamed("L", "loss_home")
+            .withColumnRenamed("GF", "goals_for_home")
+            .withColumnRenamed("GA", "goals_against_home")
+            .withColumnRenamed("W.1", "win_away")
+            .withColumnRenamed("D.1", "draw_away")
+            .withColumnRenamed("L.1", "loss_away")
+            .withColumnRenamed("GF.1", "goals_for_away")
+            .withColumnRenamed("GA.1", "goals_against_away")
+            .withColumnRenamed("GD", "goal_difference")
+         )
+
+# COMMAND ----------
+
+# Filter league standings to records with the most played games for each team 
+# silver_streaming_df_1 = silver_streaming_df_1.orderBy(col("P").desc())
+
+# COMMAND ----------
+
+# Select the latest 20 records for the league standings
+silver_streaming_df_1 = silver_streaming_df_1.limit(20)
+
+# COMMAND ----------
+
+silver_streaming_query = (silver_streaming_df_1
                           .writeStream
                           .format("delta")
                           .outputMode("append")
