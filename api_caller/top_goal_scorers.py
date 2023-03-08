@@ -93,81 +93,107 @@ API_KEY                         =       os.getenv("API_KEY")
 API_HOST                        =       os.getenv("API_HOST")
 league_id                       =       os.getenv("LEAGUE_ID")
 season                          =       os.getenv("SEASON")
-team_id                         =       os.getenv("TEAM_ID")
-# local_target_path               =       os.path.abspath('api_caller/temp_storage/teams/dirty_data')
-local_target_path               =       os.path.abspath('api_caller/temp_storage/teams/dirty_data')
+
+local_target_path               =       os.path.abspath('api_caller/temp_storage/top_goal_scorers/dirty_data')
 match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01', '2023-03-08']
 headers                         =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
-query_string                    =       {'league': league_id, 'season': season, 'team': team_id}
+query_string                    =       {'league': league_id, 'season': season}
 
 
+  
+try:
 
-for match_date in match_dates:
+    # Send HTTP request for football data to Rapid-API endpoint
+    top_goal_scorers_url                            =       f'https://api-football-v1.p.rapidapi.com/v3/players/topscorers'
+    top_goal_scorers_file                           =       f'top_goal_scorers.csv'
+    S3_KEY                                          =       S3_FOLDER + top_goal_scorers_file
+    CSV_BUFFER                                      =       io.StringIO()
+
     
-    try:
+    root_logger.info(f'>>>>   Sending HTTP GET requests to API endpoint for latest top_goal_scorers in the Premier League ...')
+    root_logger.debug(f'>>>>   ')
+    response                        =       requests.request("GET", top_goal_scorers_url, headers=headers, params=query_string)
+    # root_logger.debug(response.text)
 
-        # Send HTTP request for football data to Rapid-API endpoint
-        teams_url                                       =       f"https://api-football-v1.p.rapidapi.com/v3/teams/statistics?league={league_id}&team={team_id}&season={season}&date={match_date}"
-        team_file                                       =       f'team_{match_date}.csv'
-        S3_KEY                                          =       S3_FOLDER + team_file
-        CSV_BUFFER                                      =       io.StringIO()
+    # Display the response in a readable JSON format
+    root_logger.info(f'>>>>   Requests completed, now processing JSON payload ...')
+    root_logger.debug(f'>>>>   ')
+    response_json = json.dumps(response.json(), indent=4)
+    # root_logger.debug(response_json)
 
-        
-        root_logger.info(f'>>>>   Sending HTTP GET requests to API endpoint for team profile as of {match_date} ...')
+
+    # Read JSON payload into data frame 
+    root_logger.info(f'>>>>   Reading JSON payload into data frame ...')
+    root_logger.debug(f'>>>>   ')
+    
+    players                     =   []
+    statistics                  =   []
+
+    player_loop_counter         =   0
+    statistics_loop_counter     =   0
+
+
+
+    for index in range(20):
+
+        player_loop_counter += 1
+        player_details = response.json()['response'][index]['player']
+        players.append(player_details)
+        root_logger.debug(f"Player count: {player_loop_counter} ")
+
+        statistics_loop_counter += 1
+        player_statistics = response.json()['response'][index]['statistics']
+        statistics.append(player_statistics)
+        root_logger.debug(f"Statistics count: {statistics_loop_counter} ")
+
+    player_details_df = pd.DataFrame(players)
+    player_statistics_df = pd.DataFrame(statistics)
+
+
+    top_goal_scorers_df = pd.concat([player_details_df, player_statistics_df], axis=1)
+
+    print('------------')
+    print('')
+    print(top_goal_scorers_df)
+    print('')
+    print('------------')
+
+    # Write data frame to CSV file
+    root_logger.info(f'>>>>   Writing data frame to CSV file ...')
+    root_logger.debug(f'>>>>   ')
+
+
+
+
+    if WRITE_TO_CLOUD:
+        top_goal_scorers_df.to_csv(CSV_BUFFER , index=False)
+        RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
+
+        # Load Postgres table to S3
+        s3_client.put_object(Bucket=S3_BUCKET,
+                    Key=S3_KEY,
+                    Body=RAW_TABLE_ROWS_AS_STRING_VALUES
+                    )
+        root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
         root_logger.debug(f'>>>>   ')
-        response                        =       requests.request("GET", teams_url, headers=headers, params=query_string)
-
-        # Display the response in a readable JSON format
-        root_logger.info(f'>>>>   Requests completed, now processing JSON payload ...')
-        root_logger.debug(f'>>>>   ')
-        response_json = json.dumps(response.json(), indent=4)
-
-
-        # Read JSON payload into data frame 
-        root_logger.info(f'>>>>   Reading JSON payload into data frame ...')
-        root_logger.debug(f'>>>>   ')
-        fixtures = response.json()['response']['fixtures']
-        df = pd.json_normalize(fixtures)
-        df['match_date'] = match_date
-        print(df)
-
-
-        # Write data frame to CSV file
-        root_logger.info(f'>>>>   Writing data frame to CSV file ...')
+        root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+        root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+        root_logger.debug(f' ')
+    
+    else:
+        # top_goal_scorers_df.to_csv(f'' , index=False)
+        top_goal_scorers_df.to_csv(f'{local_target_path}/{top_goal_scorers_file}', index=False, encoding='utf-8')
+        root_logger.info("")
+        root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to local target location...')
         root_logger.debug(f'>>>>   ')
 
 
 
+    # Add delays to avoid overloading the website's servers 
+    sleep(3)
 
-        if WRITE_TO_CLOUD:
-            df.to_csv(CSV_BUFFER , index=False)
-            RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
-
-            # Load Postgres table to S3
-            s3_client.put_object(Bucket=S3_BUCKET,
-                        Key=S3_KEY,
-                        Body=RAW_TABLE_ROWS_AS_STRING_VALUES
-                        )
-            root_logger.info(f'>>>>   Successfully written and loaded "{team_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
-            root_logger.debug(f'>>>>   ')
-            root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
-            root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
-            root_logger.debug(f' ')
-        
-        else:
-            # df.to_csv(f'' , index=False)
-            df.to_csv(f'{local_target_path}/{team_file}', index=False)
-            root_logger.info("")
-            root_logger.info(f'>>>>   Successfully written and loaded "{df}" file to local target location...')
-            root_logger.debug(f'>>>>   ')
-
-
-
-        # Add delays to avoid overloading the website's servers 
-        sleep(3)
-
-    except Exception as e:
-        root_logger.error(e)
+except Exception as e:
+    root_logger.error(e)
 
 
 
