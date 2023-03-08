@@ -199,24 +199,21 @@ else:
 
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType
 
-league_table_schema = StructType([
+team_schema = StructType([
     
-    StructField("Pos", IntegerType(), False),
-    StructField("Team", StringType(), False),
-    StructField("P", IntegerType(), False),
-    StructField("W", IntegerType(), False),
-    StructField("D", IntegerType(), False),
-    StructField("L", IntegerType(), True),
-    StructField("GF", IntegerType(), True),
-    StructField("GA", IntegerType(), True),
-    StructField("W.1", IntegerType(), True),
-    StructField("D.1", IntegerType(), True),
-    StructField("L.1", IntegerType(), True),
-    StructField("GF.1", IntegerType(), True),
-    StructField("GA.1", IntegerType(), True),
-    StructField("GD", IntegerType(), True),
-    StructField("Pts", IntegerType(), True),
-    StructField("match_date", DateType(), True)
+    StructField("played.home", IntegerType(), True),
+    StructField("played.away", IntegerType(), True),
+    StructField("played.total", IntegerType(), True),
+    StructField("wins.home", IntegerType(), True),
+    StructField("wins.away", IntegerType(), True),
+    StructField("wins.total", IntegerType(), True),
+    StructField("draws.home", IntegerType(), True),
+    StructField("draws.away", IntegerType(), True),
+    StructField("draws.total", IntegerType(), True),
+    StructField("loses.home", IntegerType(), True),
+    StructField("loses.away", IntegerType(), True),
+    StructField("loses.total", IntegerType(), True),
+    StructField("match_date", StringType(), True)
     
 ])
 
@@ -245,7 +242,7 @@ src_query = (spark.readStream
         .option("header", "true")
         .option("inferSchema", "false")
         .option("maxFilesPerTrigger", 2)
-        .schema(league_table_schema)
+        .schema(team_schema)
         .load(football_data_path_for_src_csv_files)
      )
 
