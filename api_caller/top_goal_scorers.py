@@ -129,30 +129,56 @@ try:
 
     # Store the size of the JSON payload response 
 
-    top_goal_scorer_count = len(response_json)
+    # top_goal_scorer_count = len(response_json['response'])
+
+
+    players = []
+    statistics = []
+
+    player_loop_counter = 0
+    statistics_loop_counter = 0
+
+
+    # root_logger.debug(f'Response size: {top_goal_scorer_count} ')
     
-     
+    
+    for player_index in range(1, 21):
+        for item in response_json['response'][player_index]:
+            player_loop_counter += 1
+            print(item)
 
 
-    player_details = response.json()['response'][0]['player']
-    df_1 = pd.json_normalize(player_details)
+            players.append(item['player'])
+            root_logger.debug(f"Player count: {player_loop_counter} ")
 
-    print('------------')
-    print('')
-    print(df_1)
-    print('')
-    print('------------')
 
-    player_statistics = response.json()['response'][0]['statistics']
-    df_2 = pd.json_normalize(player_statistics)
+            statistics.append(item['statistics'])
+            root_logger.debug(f"Statistics count: {statistics_loop_counter} ")
+    
+    players_df = pd.DataFrame(players)
+    statistics_df = pd.DataFrame(statistics)
 
-    print('------------')
-    print('')
-    print(df_2)
-    print('')
-    print('------------')
+    df = pd.concat([players_df, statistics_df], axis=1)
 
-    df = pd.concat([df_1, df_2], axis=1)
+    # player_details = response.json()['response'][0]['player']
+    # df_1 = pd.json_normalize(player_details)
+
+    # print('------------')
+    # print('')
+    # print(df_1)
+    # print('')
+    # print('------------')
+
+    # player_statistics = response.json()['response'][0]['statistics']
+    # df_2 = pd.json_normalize(player_statistics)
+
+    # print('------------')
+    # print('')
+    # print(df_2)
+    # print('')
+    # print('------------')
+
+    # df = pd.concat([df_1, df_2], axis=1)
 
     print('------------')
     print('')
