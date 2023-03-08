@@ -82,12 +82,12 @@ mount_point = f"/mnt/{container_name}-dbfs"
 
 
 # Source locations
-football_data_path_for_src_csv_files    = f"{mount_point}/src/team-raw-data"
+football_data_path_for_src_csv_files    = f"{mount_point}/src/top-goal-scorers-raw-data"
 football_data_path_for_src_delta_files  = f"{mount_point}/src/delta"
 
 
 # Target locations
-football_data_path_for_tgt_delta_files = f"{mount_point}/tgt/delta/teams_delta_folder"
+football_data_path_for_tgt_delta_files = f"{mount_point}/tgt/delta/top_goal_scorers_delta_folder"
 
 bronze_output_location  = f"{football_data_path_for_tgt_delta_files}/bronze"
 silver_output_location  = f"{football_data_path_for_tgt_delta_files}/silver"
@@ -109,9 +109,11 @@ gold_table = gold_output_location + "tables/base_file/"
 
 # Aggregations
 
-premier_league_table_gold                  =   gold_table + 'premier_league_table/delta_file'
-teams_with_most_wins_table_gold            =   gold_table + 'teams_with_most_wins/delta_file'
-teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goals_scored/delta_file'
+
+
+
+youngest_goal_scorers_gold    = gold_table + 'youngest_goal_scorers/delta_file'
+top_goal_contributions_gold   = gold_table + 'top_goal_contributions/delta_file'
 
 
 
@@ -197,23 +199,99 @@ else:
 
 # COMMAND ----------
 
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, BooleanType, DoubleType, ArrayType, MapType
 
-team_schema = StructType([
-    
-    StructField("played.home", IntegerType(), True),
-    StructField("played.away", IntegerType(), True),
-    StructField("played.total", IntegerType(), True),
-    StructField("wins.home", IntegerType(), True),
-    StructField("wins.away", IntegerType(), True),
-    StructField("wins.total", IntegerType(), True),
-    StructField("draws.home", IntegerType(), True),
-    StructField("draws.away", IntegerType(), True),
-    StructField("draws.total", IntegerType(), True),
-    StructField("loses.home", IntegerType(), True),
-    StructField("loses.away", IntegerType(), True),
-    StructField("loses.total", IntegerType(), True),
-    StructField("match_date", StringType(), True)
+
+
+top_goal_scorers_schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True),
+    StructField("firstname", StringType(), True),
+    StructField("lastname", StringType(), True),
+    StructField("age", IntegerType(), True),
+    StructField("birth", StructType([
+        StructField("date", StringType(), True),
+        StructField("place", StringType(), True),
+        StructField("country", StringType(), True)
+    ]), True),
+    StructField("nationality", StringType(), True),
+    StructField("height", StringType(), True),
+    StructField("weight", StringType(), True),
+    StructField("injured", BooleanType(), True),
+    StructField("photo", StringType(), True),
+    StructField("0", StructType([
+        StructField("team", StructType([
+            StructField("id", IntegerType(), True),
+            StructField("name", StringType(), True),
+            StructField("logo", StringType(), True)
+        ]), True),
+        StructField("league", StructType([
+            StructField("id", IntegerType(), True),
+            StructField("name", StringType(), True),
+            StructField("country", StringType(), True),
+            StructField("logo", StringType(), True),
+            StructField("flag", StringType(), True),
+            StructField("season", IntegerType(), True)
+        ]), True),
+        StructField("games", StructType([
+            StructField("appearences", IntegerType(), True),
+            StructField("lineups", IntegerType(), True),
+            StructField("minutes", IntegerType(), True),
+            StructField("number", IntegerType(), True),
+            StructField("position", StringType(), True),
+            StructField("rating", StringType(), True),
+            StructField("captain", BooleanType(), True)
+        ]), True),
+        StructField("substitutes", StructType([
+            StructField("in", IntegerType(), True),
+            StructField("out", IntegerType(), True),
+            StructField("bench", IntegerType(), True)
+        ]), True),
+        StructField("shots", StructType([
+            StructField("total", IntegerType(), True),
+            StructField("on", IntegerType(), True)
+        ]), True),
+        StructField("goals", StructType([
+            StructField("total", IntegerType(), True),
+            StructField("conceded", IntegerType(), True),
+            StructField("assists", IntegerType(), True),
+            StructField("saves", IntegerType(), True)
+        ]), True),
+        StructField("passes", StructType([
+            StructField("total", IntegerType(), True),
+            StructField("key", IntegerType(), True),
+            StructField("accuracy", IntegerType(), True)
+        ]), True),
+        StructField("tackles", StructType([
+            StructField("total", IntegerType(), True),
+            StructField("blocks", IntegerType(), True),
+            StructField("interceptions", IntegerType(), True)
+        ]), True),
+        StructField("duels", StructType([
+            StructField("total", IntegerType(), True),
+            StructField("won", IntegerType(), True)
+        ]), True),
+        StructField("dribbles", StructType([
+            StructField("attempts", IntegerType(), True),
+            StructField("success", IntegerType(), True),
+            StructField("past", IntegerType(), True)
+        ]), True),
+        StructField("fouls", StructType([
+            StructField("drawn", IntegerType(), True),
+            StructField("commited", IntegerType(), True)
+        ]), True),
+        StructField("cards", StructType([
+            StructField("yellow", IntegerType(), True),
+            StructField("yellowred", IntegerType(), True),
+            StructField("red", IntegerType(), True)
+        ]), True),
+        StructField("penalty", StructType([
+            StructField("won", IntegerType(), True),
+            StructField("committed", IntegerType(), True),
+            StructField("scored", IntegerType(), True),
+            StructField("missed", IntegerType(), True),
+            StructField("saved", IntegerType(), True)
+        ]), True)
     
 ])
 
@@ -242,7 +320,7 @@ src_query = (spark.readStream
         .option("header", "true")
         .option("inferSchema", "false")
         .option("maxFilesPerTrigger", 2)
-        .schema(team_schema)
+        .schema(league_table_schema)
         .load(football_data_path_for_src_csv_files)
      )
 
@@ -256,7 +334,7 @@ src_query = (spark.readStream
 
 from pyspark.sql.functions import concat, lit, lower, regexp_replace
 
-src_query = src_query.withColumn("team_id", concat(lit("man_td"), lit("_123")))
+src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
 
 # COMMAND ----------
 
@@ -441,41 +519,47 @@ def mergeChangesToDF(df, batchID):
     # Set condition for joining the tables 
     join_condition = target_tbl.team_id == source_tbl.team_id
     
- # Define the update statement for when the rows match
-update_statement = {
-    "played_home": source_tbl.played_home,
-    "played_away": source_tbl.played_away,
-    "played_total": source_tbl.played_total,
-    "wins_home": source_tbl.wins_home,
-    "wins_away": source_tbl.wins_away,
-    "wins_total": source_tbl.wins_total,
-    "draws_home": source_tbl.draws_home,
-    "draws_away": source_tbl.draws_away,
-    "draws_total": source_tbl.draws_total,
-    "loses_home": source_tbl.loses_home,
-    "loses_away": source_tbl.loses_away,
-    "loses_total": source_tbl.loses_total,
-    "match_date": source_tbl.match_date,
-    "update_flag": lit("U")  # Add a flag column for updates
-}
+    
+    # Define the update statement for when the rows match
+    update_statement = {
+        "Pts": source_tbl.Pts,
+        "W": source_tbl.W,
+        "D": source_tbl.D,
+        "L": source_tbl.L,
+        "GF": source_tbl.GF,
+        "GA": source_tbl.GA,
+        "W.1": source_tbl["W.1"],
+        "D.1": source_tbl["D.1"],
+        "L.1": source_tbl["L.1"],
+        "GF.1": source_tbl["GF.1"],
+        "GA.1": source_tbl["GA.1"],
+        "GD": source_tbl.GD,
+        "match_date": source_tbl["match_date"],
+        "update_flag": lit("U")  # Add a flag column for updates
+    }
 
-# Define the insert statement for when the rows don't match
-insert_statement = {
-    "played_home": source_tbl.played_home,
-    "played_away": source_tbl.played_away,
-    "played_total": source_tbl.played_total,
-    "wins_home": source_tbl.wins_home,
-    "wins_away": source_tbl.wins_away,
-    "wins_total": source_tbl.wins_total,
-    "draws_home": source_tbl.draws_home,
-    "draws_away": source_tbl.draws_away,
-    "draws_total": source_tbl.draws_total,
-    "loses_home": source_tbl.loses_home,
-    "loses_away": source_tbl.loses_away,
-    "loses_total": source_tbl.loses_total,
-    "match_date": source_tbl.match_date,
-    "update_flag": lit("I")  # Add a flag column for inserts
-} 
+    # Define the insert statement for when the rows don't match
+    insert_statement = {
+        "Pos": source_tbl.Pos,
+        "Team": source_tbl.Team,
+        "P": source_tbl.P,
+        "W": source_tbl.W,
+        "D": source_tbl.D,
+        "L": source_tbl.L,
+        "GF": source_tbl.GF,
+        "GA": source_tbl.GA,
+        "W.1": source_tbl["W.1"],
+        "D.1": source_tbl["D.1"],
+        "L.1": source_tbl["L.1"],
+        "GF.1": source_tbl["GF.1"],
+        "GA.1": source_tbl["GA.1"],
+        "GD": source_tbl.GD,
+        "Pts": source_tbl.Pts,
+        "match_date": source_tbl["match_date"],
+        "team_id": source_tbl.team_id,
+        "update_flag": lit("I")  # Add a flag column for inserts
+    }
+    
     
     # Perform the Delta merge operation
     (target_tbl
@@ -486,7 +570,7 @@ insert_statement = {
          set=update_statement)
      .whenNotMatchedInsertAll(
          values=insert_statement)
-#      .orderBy("Pos", "P")
+     .orderBy("Pos", "P")
      .execute() 
     )
     
