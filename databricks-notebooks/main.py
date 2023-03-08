@@ -49,7 +49,7 @@
 # MAGIC * Use silver delta table as source for data frame for gold zone --- [x]
 # MAGIC * Convert gold data frame to temp view  --- [x] 
 # MAGIC * Persist dataframe to cache  --- [x]
-# MAGIC * Drop duplicates from data frame  --- [x]
+# MAGIC * Drop duplicates form previous append operations  --- [x]
 # MAGIC * Use aggregate operations to summarize table standings data  --- [x]
 # MAGIC * Create and visualize the aggregate tables  --- [x]
 
@@ -284,15 +284,6 @@ bronze_streaming_query = (src_query
 
 # COMMAND ----------
 
-from time import sleep
-import time
-
-
-# Add simulated delay to process incoming rows into tables 
-sleep(3)
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC 
 # MAGIC ### List the objects in the Delta folder in DBFS
@@ -301,6 +292,10 @@ sleep(3)
 
 # List the objects in the DBFS mount point where the Delta files reside
 # dbutils.fs.ls(f"{football_data_path_for_tgt_delta_files}")
+
+# COMMAND ----------
+
+# stop_here_and_re_execute_script
 
 # COMMAND ----------
 
@@ -575,6 +570,27 @@ def reorganize_columns(df: DataFrame) -> DataFrame:
 
 # COMMAND ----------
 
+# Deduplicate the records in the dataframe
+
+def drop_duplicates(df: DataFrame) -> DataFrame:
+    return (
+        df.dropDuplicates(
+            ["ranking", 
+             "team", 
+             "matches_played", 
+             "wins", 
+             "draws", 
+             "losses", 
+             "goals_for", 
+             "goals_against", 
+             "goal_difference", 
+             "points"
+            ]
+        )
+    )
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC 
 # MAGIC ### Begin silver streaming query using bronze delta table as the source
@@ -600,6 +616,7 @@ silver_streaming_df_1 = (spark
 silver_streaming_df_1 =  (silver_streaming_df_1.transform(rename_columns)
                                               .transform(add_calculated_columns)
                                               .transform(reorganize_columns)
+                                              .transform(drop_duplicates)
                          )
 
 # COMMAND ----------
@@ -620,7 +637,7 @@ spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl;  """)
 
 # COMMAND ----------
 
-silver_streaming_query = (silver_streaming_df_1
+silver_streaming_df_2 = (silver_streaming_df_1
                           .writeStream
                           .format("delta")
                           .outputMode("append")
@@ -634,17 +651,21 @@ silver_streaming_query = (silver_streaming_df_1
 
 # COMMAND ----------
 
+# stop_here_and_re_execute_script
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC 
 # MAGIC ### Display the data profiling metrics
 
 # COMMAND ----------
 
-if len(silver_streaming_query.recentProgress) > 0:
-    no_of_incoming_rows = silver_streaming_query.recentProgress[0]['numInputRows']
-    query_execution_timestamp = silver_streaming_query.recentProgress[0]['timestamp']
-    silver_sources = silver_streaming_query.recentProgress[0]['sources'][0]['description']
-    silver_sink = silver_streaming_query.recentProgress[0]['sink']['description']
+if len(silver_streaming_df_2.recentProgress) > 0:
+    no_of_incoming_rows = silver_streaming_df_2.recentProgress[0]['numInputRows']
+    query_execution_timestamp = silver_streaming_df_2.recentProgress[0]['timestamp']
+    silver_sources = silver_streaming_df_2.recentProgress[0]['sources'][0]['description']
+    silver_sink = silver_streaming_df_2.recentProgress[0]['sink']['description']
     
     
     print(f'=================== DATA PROFILING METRICS: SILVER ===================')
@@ -707,7 +728,7 @@ silver_tbl_df = spark.read.table("football_db.silver_tbl")
 # MAGIC * Use silver delta table as source for data frame for gold zone --- [x]
 # MAGIC * Convert gold data frame to temp view  --- [x] 
 # MAGIC * Persist dataframe to cache  --- [x]
-# MAGIC * Drop duplicates from data frame  --- [x]
+# MAGIC * Drop duplicates form previous append operations  --- [x]
 # MAGIC * Use aggregate operations to summarize table standings data  --- [x]
 # MAGIC * Create and visualize the aggregate tables  --- [x]
 # MAGIC 
@@ -755,7 +776,7 @@ gold_tbl_df.persist(StorageLevel.MEMORY_ONLY)
 
 # MAGIC %md 
 # MAGIC 
-# MAGIC ### Drop duplicates from data frame
+# MAGIC ### Drop duplicates form previous append operations
 
 # COMMAND ----------
 
