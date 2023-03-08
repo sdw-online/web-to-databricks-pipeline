@@ -256,7 +256,7 @@ src_query = (spark.readStream
 
 from pyspark.sql.functions import concat, lit, lower, regexp_replace
 
-src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
+src_query = src_query.withColumn("team_id", concat(lit("man_td"), lit("_123")))
 
 # COMMAND ----------
 
@@ -441,47 +441,41 @@ def mergeChangesToDF(df, batchID):
     # Set condition for joining the tables 
     join_condition = target_tbl.team_id == source_tbl.team_id
     
-    
-    # Define the update statement for when the rows match
-    update_statement = {
-        "Pts": source_tbl.Pts,
-        "W": source_tbl.W,
-        "D": source_tbl.D,
-        "L": source_tbl.L,
-        "GF": source_tbl.GF,
-        "GA": source_tbl.GA,
-        "W.1": source_tbl["W.1"],
-        "D.1": source_tbl["D.1"],
-        "L.1": source_tbl["L.1"],
-        "GF.1": source_tbl["GF.1"],
-        "GA.1": source_tbl["GA.1"],
-        "GD": source_tbl.GD,
-        "match_date": source_tbl["match_date"],
-        "update_flag": lit("U")  # Add a flag column for updates
-    }
+ # Define the update statement for when the rows match
+update_statement = {
+    "played_home": source_tbl.played_home,
+    "played_away": source_tbl.played_away,
+    "played_total": source_tbl.played_total,
+    "wins_home": source_tbl.wins_home,
+    "wins_away": source_tbl.wins_away,
+    "wins_total": source_tbl.wins_total,
+    "draws_home": source_tbl.draws_home,
+    "draws_away": source_tbl.draws_away,
+    "draws_total": source_tbl.draws_total,
+    "loses_home": source_tbl.loses_home,
+    "loses_away": source_tbl.loses_away,
+    "loses_total": source_tbl.loses_total,
+    "match_date": source_tbl.match_date,
+    "update_flag": lit("U")  # Add a flag column for updates
+}
 
-    # Define the insert statement for when the rows don't match
-    insert_statement = {
-        "Pos": source_tbl.Pos,
-        "Team": source_tbl.Team,
-        "P": source_tbl.P,
-        "W": source_tbl.W,
-        "D": source_tbl.D,
-        "L": source_tbl.L,
-        "GF": source_tbl.GF,
-        "GA": source_tbl.GA,
-        "W.1": source_tbl["W.1"],
-        "D.1": source_tbl["D.1"],
-        "L.1": source_tbl["L.1"],
-        "GF.1": source_tbl["GF.1"],
-        "GA.1": source_tbl["GA.1"],
-        "GD": source_tbl.GD,
-        "Pts": source_tbl.Pts,
-        "match_date": source_tbl["match_date"],
-        "team_id": source_tbl.team_id,
-        "update_flag": lit("I")  # Add a flag column for inserts
-    }
-    
+# Define the insert statement for when the rows don't match
+insert_statement = {
+    "played_home": source_tbl.played_home,
+    "played_away": source_tbl.played_away,
+    "played_total": source_tbl.played_total,
+    "wins_home": source_tbl.wins_home,
+    "wins_away": source_tbl.wins_away,
+    "wins_total": source_tbl.wins_total,
+    "draws_home": source_tbl.draws_home,
+    "draws_away": source_tbl.draws_away,
+    "draws_total": source_tbl.draws_total,
+    "loses_home": source_tbl.loses_home,
+    "loses_away": source_tbl.loses_away,
+    "loses_total": source_tbl.loses_total,
+    "match_date": source_tbl.match_date,
+    "update_flag": lit("I")  # Add a flag column for inserts
+} 
     
     # Perform the Delta merge operation
     (target_tbl
@@ -492,7 +486,7 @@ def mergeChangesToDF(df, batchID):
          set=update_statement)
      .whenNotMatchedInsertAll(
          values=insert_statement)
-     .orderBy("Pos", "P")
+#      .orderBy("Pos", "P")
      .execute() 
     )
     
