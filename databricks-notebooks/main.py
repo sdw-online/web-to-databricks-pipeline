@@ -36,11 +36,12 @@
 # MAGIC * Set up target and source tables to prepare for CDC operations --- [x]
 # MAGIC * Create custom MERGE function to apply CDC to micro-batches dynamically --- [x]
 # MAGIC * Begin silver streaming query using bronze delta table as the source --- [x]
+# MAGIC * Specify transformation intents using functions --- [x]
 # MAGIC * Apply transformation logic to streaming dataframes --- [x]
 # MAGIC * Write transformed data from source query into silver delta table  --- [x]
 # MAGIC * Display the data profiling metrics --- [x]
 # MAGIC * Analyze the silver streaming results --- [x]
-# MAGIC * Save Hive tables as silver delta tables --- [x] 
+# MAGIC * Save Hive tables as silver delta tables --- [x]
 # MAGIC 
 # MAGIC 
 # MAGIC ### Gold zone
@@ -383,6 +384,7 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 # MAGIC * Set up target and source tables to prepare for CDC operations --- [x]
 # MAGIC * Create custom MERGE function to apply CDC to micro-batches dynamically --- [x]
 # MAGIC * Begin silver streaming query using bronze delta table as the source --- [x]
+# MAGIC * Specify transformation intents using functions --- [x]
 # MAGIC * Apply transformation logic to streaming dataframes --- [x]
 # MAGIC * Write transformed data from source query into silver delta table  --- [x]
 # MAGIC * Display the data profiling metrics --- [x]
@@ -525,14 +527,19 @@ silver_streaming_df_1 = (spark
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Apply transformation logic to streaming dataframes
+# MAGIC ### Specify transformation intents using functions
+
+# COMMAND ----------
+
+from pyspark.sql import DataFrame
 
 # COMMAND ----------
 
 # Rename columns 
 
-silver_streaming_df_1 =  (
-        silver_streaming_df_1.withColumnRenamed("Pos", "ranking")
+def rename_columns(df: DataFrame) -> DataFrame:
+    return (
+        df.withColumnRenamed("Pos", "ranking")
             .withColumnRenamed("Team", "team")
             .withColumnRenamed("P", "matches_played")
             .withColumnRenamed("Pts", "points")
@@ -553,18 +560,52 @@ silver_streaming_df_1 =  (
 
 # Create new calculated columns for wins, draws, losses, goals_for, goals_against by combining the home & away columns 
 
-silver_streaming_df_1 = silver_streaming_df_1.withColumn("wins", col("win_home") + col("win_away"))
-silver_streaming_df_1 = silver_streaming_df_1.withColumn("draws", col("draw_home") + col("draw_away"))
-silver_streaming_df_1 = silver_streaming_df_1.withColumn("losses", col("loss_home") + col("loss_away"))
-silver_streaming_df_1 = silver_streaming_df_1.withColumn("goals_for", col("goals_for_home") + col("goals_for_away"))
-silver_streaming_df_1 = silver_streaming_df_1.withColumn("goals_against", col("goals_against_home") + col("goals_against_away"))
-
+def add_calculated_columns(df: DataFrame) -> DataFrame:
+    return (
+        df.withColumn("wins", col("win_home") + col("win_away"))
+          .withColumn("draws", col("draw_home") + col("draw_away"))
+          .withColumn("losses", col("loss_home") + col("loss_away"))
+          .withColumn("goals_for", col("goals_for_home") + col("goals_for_away"))
+          .withColumn("goals_against", col("goals_against_home") + col("goals_against_away")
+                     )
+)
 
 # COMMAND ----------
 
-# Organise the columns in a set order
+# Re-organise the columns in a set order
 
-silver_streaming_df_1 = silver_streaming_df_1.select(["ranking", "team", "matches_played", "wins", "draws", "losses", "goals_for", "goals_against", "goal_difference", "points"])
+def reorganize_columns(df: DataFrame) -> DataFrame:
+    return (
+        df.select(
+            ["ranking", 
+             "team", 
+             "matches_played", 
+             "wins", 
+             "draws", 
+             "losses", 
+             "goals_for", 
+             "goals_against", 
+             "goal_difference", 
+             "points"
+            ]
+        )
+    )
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Apply transformation logic to streaming dataframes
+
+# COMMAND ----------
+
+# Apply transformations
+
+silver_streaming_df_1 =  (silver_streaming_df_1.transform(rename_columns)
+                                              .transform(add_calculated_columns)
+                                              .transform(reorganize_columns)
+                         )
+
 
 # COMMAND ----------
 
