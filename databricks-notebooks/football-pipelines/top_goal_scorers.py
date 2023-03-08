@@ -21,10 +21,10 @@
 # MAGIC ### Bronze zone
 # MAGIC * Specify schema --- [x]
 # MAGIC * Create database objects --- [x]
-# MAGIC * Ingest CSV file into dataframe  --- [x]
+# MAGIC * Ingest JSON file into dataframe  --- [x]
 # MAGIC * Add unique ID column --- [x]
 # MAGIC * List the objects in the Delta folder in DBFS --- [x]
-# MAGIC * Ingest CSV files from source directory into streaming dataframe --- [x]
+# MAGIC * Ingest JSON files from source directory into streaming dataframe --- [x]
 # MAGIC * Write data from source query into bronze delta table --- [x]
 # MAGIC * List the objects in the Delta folder in DBFS --- [x]
 # MAGIC * Display the data profiling metrics --- [x]
@@ -82,7 +82,7 @@ mount_point = f"/mnt/{container_name}-dbfs"
 
 
 # Source locations
-football_data_path_for_src_csv_files    = f"{mount_point}/src/top-goal-scorers-raw-data"
+football_data_path_for_src_json_files    = f"{mount_point}/src/top-goal-scorers-raw-data"
 football_data_path_for_src_delta_files  = f"{mount_point}/src/delta"
 
 
@@ -120,7 +120,7 @@ top_goal_contributions_gold   = gold_table + 'top_goal_contributions/delta_file'
 # COMMAND ----------
 
 # List the objects in the DBFS mount point 
-# dbutils.fs.ls(f"{football_data_path_for_src_csv_files}")
+# dbutils.fs.ls(f"{football_data_path_for_src_JSON_files}")
 
 # COMMAND ----------
 
@@ -133,8 +133,8 @@ top_goal_contributions_gold   = gold_table + 'top_goal_contributions/delta_file'
 # Delete objects for this session (checkpoint locations, tables etc)
 
 
-# DELETE_SESSION_OBJECTS = True
-DELETE_SESSION_OBJECTS = False
+DELETE_SESSION_OBJECTS = True
+# DELETE_SESSION_OBJECTS = False
 
 
 if DELETE_SESSION_OBJECTS:
@@ -172,10 +172,10 @@ else:
 # MAGIC ## Bronze zone
 # MAGIC * Specify schema --- [x]
 # MAGIC * Create database objects --- [x]
-# MAGIC * Ingest CSV file into dataframe  --- [x]
+# MAGIC * Ingest JSON file into dataframe  --- [x]
 # MAGIC * Add unique ID column --- [x]
 # MAGIC * List the objects in the Delta folder in DBFS --- [x]
-# MAGIC * Ingest CSV files from source directory into streaming dataframe --- [x]
+# MAGIC * Ingest JSON files from source directory into streaming dataframe --- [x]
 # MAGIC * Write data from source query into bronze delta table --- [x]
 # MAGIC * List the objects in the Delta folder in DBFS --- [x]
 # MAGIC * Display the data profiling metrics --- [x]
@@ -294,6 +294,8 @@ top_goal_scorers_schema = StructType([
         ]), True)
     
 ])
+                
+               )])
 
 # COMMAND ----------
 
@@ -311,18 +313,21 @@ top_goal_scorers_schema = StructType([
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Ingest CSV files from source directory into streaming dataframe
+# MAGIC ### Ingest JSON files from source directory into streaming dataframe
 
 # COMMAND ----------
 
 src_query = (spark.readStream
-        .format("csv")
-        .option("header", "true")
+        .format("json")
         .option("inferSchema", "false")
         .option("maxFilesPerTrigger", 2)
-        .schema(league_table_schema)
-        .load(football_data_path_for_src_csv_files)
+        .schema(top_goal_scorers_schema)
+        .load(football_data_path_for_src_json_files)
      )
+
+# COMMAND ----------
+
+display(src_query)
 
 # COMMAND ----------
 
@@ -332,9 +337,9 @@ src_query = (spark.readStream
 
 # COMMAND ----------
 
-from pyspark.sql.functions import concat, lit, lower, regexp_replace
+# from pyspark.sql.functions import concat, lit, lower, regexp_replace
 
-src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
+# src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
 
 # COMMAND ----------
 

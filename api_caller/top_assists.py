@@ -106,6 +106,7 @@ try:
     # Send HTTP request for football data to Rapid-API endpoint
     top_assists_url                                 =       f'https://api-football-v1.p.rapidapi.com/v3/players/topassists'
     top_assists_file                                =       f'top_assists.csv'
+    top_assists_file                                =       f'top_assists.json'
     S3_KEY                                          =       S3_FOLDER + top_assists_file
     CSV_BUFFER                                      =       io.StringIO()
 
@@ -158,8 +159,9 @@ try:
     print('')
     print('------------')
 
-    # Write data frame to CSV file
-    root_logger.info(f'>>>>   Writing data frame to CSV file ...')
+    # Write data frame to JSON file
+    root_logger.info(f'>>>>   Writing data frame to JSON file ...')
+    # root_logger.info(f'>>>>   Writing data frame to CSV file ...')
     root_logger.debug(f'>>>>   ')
 
 
@@ -181,11 +183,18 @@ try:
         root_logger.debug(f' ')
     
     else:
-        top_assists_df.to_csv(f'{local_target_path}/{top_assists_file}', index=False, encoding='utf-8')
+        # top_assists_df.to_csv(f'' , index=False)
+        # top_assists_df.to_csv(f'{local_target_path}/{top_assists_file}', index=False, encoding='utf-8')
+        top_assists_str = top_assists_df.to_json(orient="records")
+        top_assists_dict = json.loads(top_assists_str)
+
+        with open(f'{local_target_path}/{top_assists_file}', 'w') as f:
+            json.dump(top_assists_dict, f, indent=4)
+
+
         root_logger.info("")
         root_logger.info(f'>>>>   Successfully written and loaded "{top_assists_file}" file to local target location...')
         root_logger.debug(f'>>>>   ')
-
 
 
     # Add delays to avoid overloading the website's servers 

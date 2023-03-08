@@ -105,7 +105,8 @@ try:
 
     # Send HTTP request for football data to Rapid-API endpoint
     top_goal_scorers_url                            =       f'https://api-football-v1.p.rapidapi.com/v3/players/topscorers'
-    top_goal_scorers_file                           =       f'top_goal_scorers.csv'
+    # top_goal_scorers_file                           =       f'top_goal_scorers.csv'
+    top_goal_scorers_file                           =       f'top_goal_scorers.json'
     S3_KEY                                          =       S3_FOLDER + top_goal_scorers_file
     CSV_BUFFER                                      =       io.StringIO()
 
@@ -158,8 +159,9 @@ try:
     print('')
     print('------------')
 
-    # Write data frame to CSV file
-    root_logger.info(f'>>>>   Writing data frame to CSV file ...')
+    # Write data frame to JSON file
+    root_logger.info(f'>>>>   Writing data frame to JSON file ...')
+    # root_logger.info(f'>>>>   Writing data frame to CSV file ...')
     root_logger.debug(f'>>>>   ')
 
 
@@ -182,7 +184,14 @@ try:
     
     else:
         # top_goal_scorers_df.to_csv(f'' , index=False)
-        top_goal_scorers_df.to_csv(f'{local_target_path}/{top_goal_scorers_file}', index=False, encoding='utf-8')
+        # top_goal_scorers_df.to_csv(f'{local_target_path}/{top_goal_scorers_file}', index=False, encoding='utf-8')
+        top_goal_scorers_str = top_goal_scorers_df.to_json(orient="records")
+        top_goal_scorers_dict = json.loads(top_goal_scorers_str)
+
+        with open(f'{local_target_path}/{top_goal_scorers_file}', 'w') as f:
+            json.dump(top_goal_scorers_dict, f, indent=4)
+
+
         root_logger.info("")
         root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to local target location...')
         root_logger.debug(f'>>>>   ')
