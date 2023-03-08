@@ -6,8 +6,8 @@ import re
 
 api_caller_directory                    =       os.path.abspath('api_caller/temp_storage')
 
-original_scraped_data_directory         =       os.path.abspath('scraper/temp_storage_dev/original_data')
-dev_scraped_data_directory              =       os.path.abspath('scraper/temp_storage_dev/dev_data')
+original_scraped_data_directory         =       os.path.abspath('scraper/temp_storage/dirty_data')
+dev_scraped_data_directory              =       os.path.abspath('scraper/temp_storage/clean_data')
 
 
 
