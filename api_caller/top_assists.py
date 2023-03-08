@@ -94,7 +94,7 @@ API_HOST                        =       os.getenv("API_HOST")
 league_id                       =       os.getenv("LEAGUE_ID")
 season                          =       os.getenv("SEASON")
 
-local_target_path               =       os.path.abspath('api_caller/temp_storage/top_goal_scorers/dirty_data')
+local_target_path               =       os.path.abspath('api_caller/temp_storage/top_assists/dirty_data')
 match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01', '2023-03-08']
 headers                         =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
 query_string                    =       {'league': league_id, 'season': season}
@@ -104,15 +104,15 @@ query_string                    =       {'league': league_id, 'season': season}
 try:
 
     # Send HTTP request for football data to Rapid-API endpoint
-    top_goal_scorers_url                            =       f'https://api-football-v1.p.rapidapi.com/v3/players/topscorers'
-    top_goal_scorers_file                           =       f'top_goal_scorers.csv'
-    S3_KEY                                          =       S3_FOLDER + top_goal_scorers_file
+    top_assists_url                                 =       f'https://api-football-v1.p.rapidapi.com/v3/players/topassists'
+    top_assists_file                                =       f'top_assists.csv'
+    S3_KEY                                          =       S3_FOLDER + top_assists_file
     CSV_BUFFER                                      =       io.StringIO()
 
     
-    root_logger.info(f'>>>>   Sending HTTP GET requests to API endpoint for latest top_goal_scorers in the Premier League ...')
+    root_logger.info(f'>>>>   Sending HTTP GET requests to API endpoint for latest top_assists in the Premier League ...')
     root_logger.debug(f'>>>>   ')
-    response                        =       requests.request("GET", top_goal_scorers_url, headers=headers, params=query_string)
+    response                        =       requests.request("GET", top_assists_url, headers=headers, params=query_string)
     # root_logger.debug(response.text)
 
     # Display the response in a readable JSON format
@@ -133,7 +133,7 @@ try:
     statistics_loop_counter     =   0
 
 
-
+    
     for index in range(20):
 
         player_loop_counter += 1
@@ -150,11 +150,11 @@ try:
     player_statistics_df = pd.DataFrame(statistics)
 
 
-    top_goal_scorers_df = pd.concat([player_details_df, player_statistics_df], axis=1)
+    top_assists_df = pd.concat([player_details_df, player_statistics_df], axis=1)
 
     print('------------')
     print('')
-    print(top_goal_scorers_df)
+    print(top_assists_df)
     print('')
     print('------------')
 
@@ -166,7 +166,7 @@ try:
 
 
     if WRITE_TO_CLOUD:
-        top_goal_scorers_df.to_csv(CSV_BUFFER , index=False)
+        top_assists_df.to_csv(CSV_BUFFER , index=False)
         RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
 
         # Load Postgres table to S3
@@ -174,17 +174,16 @@ try:
                     Key=S3_KEY,
                     Body=RAW_TABLE_ROWS_AS_STRING_VALUES
                     )
-        root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
+        root_logger.info(f'>>>>   Successfully written and loaded "{top_assists_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
         root_logger.debug(f'>>>>   ')
         root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
         root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
         root_logger.debug(f' ')
     
     else:
-        # top_goal_scorers_df.to_csv(f'' , index=False)
-        top_goal_scorers_df.to_csv(f'{local_target_path}/{top_goal_scorers_file}', index=False, encoding='utf-8')
+        top_assists_df.to_csv(f'{local_target_path}/{top_assists_file}', index=False, encoding='utf-8')
         root_logger.info("")
-        root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to local target location...')
+        root_logger.info(f'>>>>   Successfully written and loaded "{top_assists_file}" file to local target location...')
         root_logger.debug(f'>>>>   ')
 
 
