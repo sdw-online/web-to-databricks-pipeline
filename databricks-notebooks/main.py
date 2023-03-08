@@ -35,9 +35,10 @@
 # MAGIC ### Silver zone
 # MAGIC * Set up target and source tables to prepare for CDC operations --- [x]
 # MAGIC * Create custom MERGE function to apply CDC to micro-batches dynamically --- [x]
-# MAGIC * Begin silver streaming query using bronze delta table as the source --- [x]
 # MAGIC * Specify transformation intents using functions --- [x]
+# MAGIC * Begin silver streaming query using bronze delta table as the source --- [x]
 # MAGIC * Apply transformation logic to streaming dataframes --- [x]
+# MAGIC * Create silver table in Hive metastore --- [x]
 # MAGIC * Write transformed data from source query into silver delta table  --- [x]
 # MAGIC * Display the data profiling metrics --- [x]
 # MAGIC * Analyze the silver streaming results --- [x]
@@ -130,8 +131,8 @@ teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goa
 # Delete objects for this session (checkpoint locations, tables etc)
 
 
-DELETE_SESSION_OBJECTS = True
-# DELETE_SESSION_OBJECTS = False
+# DELETE_SESSION_OBJECTS = True
+DELETE_SESSION_OBJECTS = False
 
 
 if DELETE_SESSION_OBJECTS:
@@ -154,7 +155,7 @@ if DELETE_SESSION_OBJECTS:
         print(">>> 3. Deleted SILVER TABLE successfully")
         
         print('')
-        print(">>>  Deleted session objects successfully ")
+        print(">>>  Deleted all session objects successfully ")
     except Exception as e:
         print(e)
     
@@ -230,12 +231,6 @@ league_table_schema = StructType([
 # MAGIC %sql
 # MAGIC 
 # MAGIC CREATE DATABASE IF NOT EXISTS football_db
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC 
-# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl
 
 # COMMAND ----------
 
@@ -383,9 +378,10 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 # MAGIC ## Silver zone
 # MAGIC * Set up target and source tables to prepare for CDC operations --- [x]
 # MAGIC * Create custom MERGE function to apply CDC to micro-batches dynamically --- [x]
-# MAGIC * Begin silver streaming query using bronze delta table as the source --- [x]
 # MAGIC * Specify transformation intents using functions --- [x]
+# MAGIC * Begin silver streaming query using bronze delta table as the source --- [x]
 # MAGIC * Apply transformation logic to streaming dataframes --- [x]
+# MAGIC * Create silver table in Hive metastore --- [x]
 # MAGIC * Write transformed data from source query into silver delta table  --- [x]
 # MAGIC * Display the data profiling metrics --- [x]
 # MAGIC * Analyze the silver streaming results --- [x]
@@ -513,20 +509,6 @@ def mergeChangesToDF(df, batchID):
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Begin silver streaming query using bronze delta table as the source
-
-# COMMAND ----------
-
-silver_streaming_df_1 = (spark
-                             .readStream
-                             .format("delta")
-                             .load(bronze_table)
-)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
 # MAGIC ### Specify transformation intents using functions
 
 # COMMAND ----------
@@ -595,6 +577,20 @@ def reorganize_columns(df: DataFrame) -> DataFrame:
 
 # MAGIC %md
 # MAGIC 
+# MAGIC ### Begin silver streaming query using bronze delta table as the source
+
+# COMMAND ----------
+
+silver_streaming_df_1 = (spark
+                             .readStream
+                             .format("delta")
+                             .load(bronze_table)
+)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
 # MAGIC ### Apply transformation logic to streaming dataframes
 
 # COMMAND ----------
@@ -606,10 +602,15 @@ silver_streaming_df_1 =  (silver_streaming_df_1.transform(rename_columns)
                                               .transform(reorganize_columns)
                          )
 
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Create silver table in Hive metastore
 
 # COMMAND ----------
 
-sleep(3)
+spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl;  """)
 
 # COMMAND ----------
 
@@ -847,21 +848,11 @@ def plot_premier_league_table(df):
              FROM premier_league_tbl_sql    
 
         """)
-
-#         df = df.toPandas()
-        
-#         fig = px.bar(df,
-#                     x="team",
-#                     y="wins",
-#                      title="Premier League Table"
-#                     )
-    
     
     except Exception as e:
         print(e)
     
     
-#     return fig.show()
     return display(df)
     
     
