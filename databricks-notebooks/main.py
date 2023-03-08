@@ -4,30 +4,64 @@
 # MAGIC # Web to Databricks pipeline
 # MAGIC 
 # MAGIC 
+# MAGIC ## Purpose
+# MAGIC 
+# MAGIC To compute the data collected from the Python API and scraping tools.
+# MAGIC 
+# MAGIC 
+# MAGIC ## Architecture 
+# MAGIC 
+# MAGIC This architecure will adopt the Medallion architecture (a recommended model from Databricks that uses bronze-silver-gold zones to apply different computation methods at each layer). 
+# MAGIC 
+# MAGIC 
 # MAGIC ## Initial Approach
 # MAGIC 
 # MAGIC 
 # MAGIC 
 # MAGIC ### Bronze zone
-# MAGIC * Specify schema
-# MAGIC * Ingest CSV file into dataframe
-# MAGIC * Convert dataframe into delta file and write to DBFS 
-# MAGIC * Read delta file into structured streaming dataframe
-# MAGIC * Trigger query to execute only when new files are dumped into the source directory (i.e. `trigger(once=True)`)
-# MAGIC * Add checkpoint files to record last state of streaming query output before query shuts down (using `checkpointLocation`)
-# MAGIC * Include schema enforcement (i.e. `enforceSchema=True`)
-# MAGIC * Write streaming query output to `bronze_folder` in the `delta_folder` of the Blob container as a delta table ("bronze_table")
-# MAGIC * Convert the bronze_table to temp view for data profiling analysis
-# MAGIC * Copy the delta files from DBFS to Blob Storage 
+# MAGIC * Specify schema --- [x]
+# MAGIC * Create database objects --- [x]
+# MAGIC * Ingest CSV file into dataframe  --- [x]
+# MAGIC * Add unique ID column --- [x]
+# MAGIC * List the objects in the Delta folder in DBFS --- [x]
+# MAGIC * Ingest CSV files from source directory into streaming dataframe --- [x]
+# MAGIC * Write data from source query into bronze delta table --- [x]
+# MAGIC * List the objects in the Delta folder in DBFS --- [x]
+# MAGIC * Display the data profiling metrics --- [x]
+# MAGIC * Convert dataframe into delta file and write to DBFS  --- [x] 
+# MAGIC * Read delta file into structured streaming dataframe  --- [x]
 # MAGIC 
 # MAGIC 
 # MAGIC ### Silver zone
-# MAGIC * Transform delta table in silver zone 
+# MAGIC * Set up target and source tables to prepare for CDC operations --- [x]
+# MAGIC * Create custom MERGE function to apply CDC to micro-batches dynamically --- [x]
+# MAGIC * Begin silver streaming query using bronze delta table as the source --- [x]
+# MAGIC * Apply transformation logic to streaming dataframes --- [x]
+# MAGIC * Write transformed data from source query into silver delta table  --- [x]
+# MAGIC * Display the data profiling metrics --- [x]
+# MAGIC * Analyze the silver streaming results --- [x]
+# MAGIC * Save Hive tables as silver delta tables --- [x] 
 # MAGIC 
 # MAGIC 
 # MAGIC ### Gold zone
-# MAGIC * Aggregate results in gold zone 
-# MAGIC * Visualize results in Power BI 
+# MAGIC * Use silver delta table as source for data frame for gold zone --- [x]
+# MAGIC * Convert gold data frame to temp view  --- [x] 
+# MAGIC * Persist dataframe to cache  --- [x]
+# MAGIC * Drop duplicates from data frame  --- [x]
+# MAGIC * Use aggregate operations to summarize table standings data  --- [x]
+# MAGIC * Create and visualize the aggregate tables  --- [x]
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Preparation
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### Specify the pipeline constants
 
 # COMMAND ----------
 
@@ -88,30 +122,43 @@ teams_with_most_goals_scored_and_conceded_table_gold    =   gold_table + 'teams_
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Clear objects for this session
+# MAGIC #### Clear objects for this session (only if you're restarting query operations)
 
 # COMMAND ----------
 
-# Delete checkpoint locations
+# Delete objects for this session (checkpoint locations, tables etc)
 
 
-# DELETE_CHECKPOINT = True
-DELETE_CHECKPOINT = False
+DELETE_SESSION_OBJECTS = True
+# DELETE_SESSION_OBJECTS = False
 
 
-if DELETE_CHECKPOINT:
+if DELETE_SESSION_OBJECTS:
     try:
         dbutils.fs.rm(bronze_checkpoint, True)
         dbutils.fs.rm(silver_checkpoint, True)
 
         # Drop directory
         dbutils.fs.rm(f"{football_data_path_for_tgt_delta_files}", recurse=True)
-        print("Deleted checkpoints and directories successfully ")
+        print(">>> 1. Deleted checkpoint locations successfully ")
+        
+        
+        # Drop Hive tables
+        
+        spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl; """)
+        print(">>> 2. Deleted BRONZE TABLE successfully")
+        
+        
+        spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl; """)
+        print(">>> 3. Deleted SILVER TABLE successfully")
+        
+        print('')
+        print(">>>  Deleted session objects successfully ")
     except Exception as e:
         print(e)
     
 else:
-    print("No checkpoints deleted.")
+    print("No session objects deleted.")
 
 # COMMAND ----------
 
@@ -127,9 +174,16 @@ else:
 # MAGIC 
 # MAGIC ## Bronze zone
 # MAGIC * Specify schema --- [x]
+# MAGIC * Create database objects --- [x]
 # MAGIC * Ingest CSV file into dataframe  --- [x]
+# MAGIC * Add unique ID column --- [x]
+# MAGIC * List the objects in the Delta folder in DBFS --- [x]
+# MAGIC * Ingest CSV files from source directory into streaming dataframe --- [x]
+# MAGIC * Write data from source query into bronze delta table --- [x]
+# MAGIC * List the objects in the Delta folder in DBFS --- [x]
+# MAGIC * Display the data profiling metrics --- [x]
 # MAGIC * Convert dataframe into delta file and write to DBFS  --- [x] 
-# MAGIC * Read delta file into structured streaming dataframe  --- []
+# MAGIC * Read delta file into structured streaming dataframe  --- [x]
 # MAGIC 
 # MAGIC ### Streaming Query
 # MAGIC * Trigger query to execute only when new files are dumped into the source directory (i.e. `trigger(once=True)`)  --- []
@@ -193,7 +247,7 @@ league_table_schema = StructType([
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Ingest CSV file into streaming dataframe
+# MAGIC ### Ingest CSV files from source directory into streaming dataframe
 
 # COMMAND ----------
 
@@ -217,6 +271,12 @@ src_query = (spark.readStream
 from pyspark.sql.functions import concat, lit, lower, regexp_replace
 
 src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Write data from source query into bronze delta table 
 
 # COMMAND ----------
 
@@ -250,7 +310,7 @@ sleep(3)
 # COMMAND ----------
 
 # List the objects in the DBFS mount point where the Delta files reside
-dbutils.fs.ls(f"{football_data_path_for_tgt_delta_files}")
+# dbutils.fs.ls(f"{football_data_path_for_tgt_delta_files}")
 
 # COMMAND ----------
 
@@ -283,7 +343,7 @@ else:
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Analyze the bronze streaming results in temp views 
+# MAGIC ### Analyze the bronze streaming results 
 
 # COMMAND ----------
 
@@ -301,11 +361,17 @@ else:
 
 # COMMAND ----------
 
-# Convert Hive table into delta table 
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Save Hive tables as bronze delta tables
+
+# COMMAND ----------
+
+# Convert Hive table into data frame 
 bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 
 
-# Save bronze_tbl_df to delta folder
+# Write bronze table data frame to delta table
 (bronze_tbl_df
      .write
      .format("delta")
@@ -320,16 +386,32 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 # MAGIC 
 # MAGIC 
 # MAGIC ## Silver zone
-# MAGIC * Use bronze table as source table for silver table
-# MAGIC * Perform MERGE operation between source and target tables --- [ ]
-# MAGIC * Convert transformation intents into PySpark logic
-# MAGIC * xxxxxxxxx --- [ ]
+# MAGIC * Set up target and source tables to prepare for CDC operations --- [x]
+# MAGIC * Create custom MERGE function to apply CDC to micro-batches dynamically --- [x]
+# MAGIC * Begin silver streaming query using bronze delta table as the source --- [x]
+# MAGIC * Apply transformation logic to streaming dataframes --- [x]
+# MAGIC * Write transformed data from source query into silver delta table  --- [x]
+# MAGIC * Display the data profiling metrics --- [x]
+# MAGIC * Analyze the silver streaming results --- [x]
+# MAGIC * Save Hive tables as silver delta tables --- [x]
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Set up target and source tables to prepare for CDC operations 
 
 # COMMAND ----------
 
 from delta.tables import *
 import pyspark.sql.functions as func
 from pyspark import StorageLevel 
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### A. Target table
 
 # COMMAND ----------
 
@@ -340,10 +422,22 @@ target_delta_tbl.toDF().show()
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC 
+# MAGIC #### B. Source table
+
+# COMMAND ----------
+
 # Set up source table 
 
 source_delta_tbl = spark.read.table("football_db.bronze_tbl")
 source_delta_tbl.show()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Create custom MERGE function to apply CDC to micro-batches dynamically  
 
 # COMMAND ----------
 
@@ -360,7 +454,6 @@ def mergeChangesToDF(df, batchID):
     source_tbl = df.alias("source_tbl")
     
 
-    
     # Set condition for joining the tables 
     join_condition = target_tbl.team_id == source_tbl.team_id
     
@@ -424,7 +517,7 @@ def mergeChangesToDF(df, batchID):
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Start silver streaming query
+# MAGIC ### Begin silver streaming query using bronze delta table as the source
 
 # COMMAND ----------
 
@@ -485,6 +578,12 @@ sleep(3)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Write transformed data from source query into silver delta table 
+
+# COMMAND ----------
+
 silver_streaming_query = (silver_streaming_df_1
                           .writeStream
                           .format("delta")
@@ -526,7 +625,7 @@ else:
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Analyze the silver streaming results in temp views 
+# MAGIC ### Analyze the silver streaming results
 
 # COMMAND ----------
 
@@ -544,11 +643,17 @@ else:
 
 # COMMAND ----------
 
-# Convert Hive table into delta table 
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Save Hive tables as silver delta tables
+
+# COMMAND ----------
+
+# Convert Hive table into data frame 
 silver_tbl_df = spark.read.table("football_db.silver_tbl")
 
 
-# Save silver_tbl_df to delta folder
+# Write silver table data frame to delta table
 (silver_tbl_df
      .write
      .format("delta")
@@ -580,7 +685,7 @@ silver_tbl_df = spark.read.table("football_db.silver_tbl")
 
 # MAGIC %md 
 # MAGIC 
-# MAGIC ### Use silver delta table as source for gold delta table
+# MAGIC ### Use silver delta table as source for gold data frame
 
 # COMMAND ----------
 
