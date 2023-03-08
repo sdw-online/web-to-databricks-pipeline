@@ -108,7 +108,7 @@ gold_table = gold_output_location + "tables/base_file/"
 # Aggregations
 
 premier_league_table_gold                               =   gold_table + 'premier_league_table/delta_file'
-teams_with_most_wins_and_losses_table_gold              =   gold_table + 'teams_with_most_wins_and_losses/delta_file'
+teams_with_most_wins_table_gold              =   gold_table + 'teams_with_most_wins/delta_file'
 teams_with_most_goals_scored_and_conceded_table_gold    =   gold_table + 'teams_with_most_goals_scored_and_conceded/delta_file'
 
 
@@ -159,13 +159,6 @@ if DELETE_SESSION_OBJECTS:
     
 else:
     print("No session objects deleted.")
-
-# COMMAND ----------
-
-# %sql
-
-# DROP TABLE IF EXISTS football_db.bronze_tbl;
-# DROP TABLE IF EXISTS football_db.silver_tbl;
 
 # COMMAND ----------
 
@@ -296,6 +289,7 @@ bronze_streaming_query = (src_query
 # COMMAND ----------
 
 from time import sleep
+import time
 
 
 # Add simulated delay to process incoming rows into tables 
@@ -793,7 +787,7 @@ def create_premier_league_table(df):
 
 def plot_premier_league_table(df):
     try:
-        print('Plotting the Premier League table using Plotly ... ')
+        print('Plotting the Premier League table using Databricks ... ')
         print('')
         df.createOrReplaceTempView("premier_league_tbl_sql")
 
@@ -835,15 +829,15 @@ def plot_premier_league_table(df):
 
 # MAGIC %md
 # MAGIC 
-# MAGIC #### 2. Teams with Most Wins/Losses
+# MAGIC #### 2. Teams with Most Wins
 
 # COMMAND ----------
 
-def create_teams_with_most_wins_and_losses_table(df):
+def create_teams_with_most_wins_table(df):
     try:
-        print('Using the source gold data frame to create the table for teams with most wins/losses ... ')
+        print('Using the source gold data frame to create the table for teams with most wins ... ')
         print('')
-        df.createOrReplaceTempView("teams_with_most_wins_and_losses_tbl_sql")
+        df.createOrReplaceTempView("teams_with_most_wins_tbl_sql")
 
         df = spark.sql("""
                             SELECT DISTINCT     ranking
@@ -876,8 +870,8 @@ def create_teams_with_most_wins_and_losses_table(df):
                         ORDER BY   ranking ASC
 
         """)
-        df.write.format("delta").mode("overwrite").save(teams_with_most_wins_and_losses_table_gold)
-        print(f'Successfully created the delta table for teams with most wins/losses in "{teams_with_most_wins_and_losses_table_gold}" location... ')
+        df.write.format("delta").mode("overwrite").save(teams_with_most_wins_table_gold)
+        print(f'Successfully created the delta table for teams with most wins in "{teams_with_most_wins_table_gold}" location... ')
     
     except Exception as e:
         print(e)
@@ -885,15 +879,15 @@ def create_teams_with_most_wins_and_losses_table(df):
 
 # COMMAND ----------
 
-def plot_teams_with_most_wins_and_losses_table(df):
+def plot_teams_with_most_wins_table(df):
     try:
-        print('Plotting the table for teams with most wins and losses using Plotly ... ')
+        print('Plotting the table for teams with most wins using Plotly ... ')
         print('')
-        df.createOrReplaceTempView("teams_with_most_wins_and_losses_tbl_sql")
+        df.createOrReplaceTempView("teams_with_most_wins_tbl_sql")
 
         df = spark.sql("""
 
-            SELECT * FROM teams_with_most_wins_and_losses_tbl_sql    
+            SELECT * FROM teams_with_most_wins_tbl_sql    
 
         """)
 
@@ -903,7 +897,7 @@ def plot_teams_with_most_wins_and_losses_table(df):
                     x="team",
                     y="wins",
                     color="team",
-                     title="Teams with most wins and losses"
+                     title="Teams with most wins"
                     )
     
     except Exception as e:
@@ -1035,29 +1029,29 @@ plot_premier_league_table(premier_league_df)
 
 # MAGIC %md
 # MAGIC 
-# MAGIC #### 2. Teams with Most Wins/Losses
+# MAGIC #### 2. Teams with Most Wins
 
 # COMMAND ----------
 
 # 1 - Create the delta table for the aggregate
 
-create_teams_with_most_wins_and_losses_table(gold_tbl_df)
+create_teams_with_most_wins_table(gold_tbl_df)
 
 # COMMAND ----------
 
 # 2 - Read the delta table into a data frame to create an aggregate table
 
-teams_with_most_wins_and_losses_df = (spark
+teams_with_most_wins_df = (spark
 .read
 .format("delta")
-.load(teams_with_most_wins_and_losses_table_gold)
+.load(teams_with_most_wins_table_gold)
 )
 
 # COMMAND ----------
 
 # 3 - Visualize the aggregate table
 
-plot_teams_with_most_wins_and_losses_table(teams_with_most_wins_and_losses_df)
+plot_teams_with_most_wins_table(teams_with_most_wins_df)
 
 # COMMAND ----------
 
