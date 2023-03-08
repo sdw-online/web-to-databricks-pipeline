@@ -126,63 +126,35 @@ try:
     root_logger.info(f'>>>>   Reading JSON payload into data frame ...')
     root_logger.debug(f'>>>>   ')
     
+    players                     =   []
+    statistics                  =   []
 
-    # Store the size of the JSON payload response 
-
-    # top_goal_scorer_count = len(response_json['response'])
-
-
-    players = []
-    statistics = []
-
-    player_loop_counter = 0
-    statistics_loop_counter = 0
+    player_loop_counter         =   0
+    statistics_loop_counter     =   0
 
 
-    # root_logger.debug(f'Response size: {top_goal_scorer_count} ')
     
-    
-    for player_index in range(1, 21):
-        for item in response_json['response'][player_index]:
-            player_loop_counter += 1
-            print(item)
+    for index in range(20):
+
+        player_loop_counter += 1
+        player_details = response.json()['response'][index]['player']
+        players.append(player_details)
+        root_logger.debug(f"Player count: {player_loop_counter} ")
+
+        statistics_loop_counter += 1
+        player_statistics = response.json()['response'][index]['statistics']
+        statistics.append(player_statistics)
+        root_logger.debug(f"Statistics count: {statistics_loop_counter} ")
+
+    player_details_df = pd.DataFrame(players)
+    player_statistics_df = pd.DataFrame(statistics)
 
 
-            players.append(item['player'])
-            root_logger.debug(f"Player count: {player_loop_counter} ")
-
-
-            statistics.append(item['statistics'])
-            root_logger.debug(f"Statistics count: {statistics_loop_counter} ")
-    
-    players_df = pd.DataFrame(players)
-    statistics_df = pd.DataFrame(statistics)
-
-    df = pd.concat([players_df, statistics_df], axis=1)
-
-    # player_details = response.json()['response'][0]['player']
-    # df_1 = pd.json_normalize(player_details)
-
-    # print('------------')
-    # print('')
-    # print(df_1)
-    # print('')
-    # print('------------')
-
-    # player_statistics = response.json()['response'][0]['statistics']
-    # df_2 = pd.json_normalize(player_statistics)
-
-    # print('------------')
-    # print('')
-    # print(df_2)
-    # print('')
-    # print('------------')
-
-    # df = pd.concat([df_1, df_2], axis=1)
+    top_goal_scorers_df = pd.concat([player_details_df, player_statistics_df], axis=1)
 
     print('------------')
     print('')
-    print(df)
+    print(top_goal_scorers_df)
     print('')
     print('------------')
 
@@ -194,7 +166,7 @@ try:
 
 
     if WRITE_TO_CLOUD:
-        df.to_csv(CSV_BUFFER , index=False)
+        top_goal_scorers_df.to_csv(CSV_BUFFER , index=False)
         RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
 
         # Load Postgres table to S3
@@ -209,10 +181,10 @@ try:
         root_logger.debug(f' ')
     
     else:
-        # df.to_csv(f'' , index=False)
-        df.to_csv(f'{local_target_path}/{top_goal_scorers_file}', index=False)
+        # top_goal_scorers_df.to_csv(f'' , index=False)
+        top_goal_scorers_df.to_csv(f'{local_target_path}/{top_goal_scorers_file}', index=False, encoding='utf-8')
         root_logger.info("")
-        root_logger.info(f'>>>>   Successfully written and loaded "{df}" file to local target location...')
+        root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_df}" file to local target location...')
         root_logger.debug(f'>>>>   ')
 
 
