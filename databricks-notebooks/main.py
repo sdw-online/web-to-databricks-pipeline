@@ -107,9 +107,9 @@ gold_table = gold_output_location + "tables/base_file/"
 
 # Aggregations
 
-premier_league_table_gold                               =   gold_table + 'premier_league_table/delta_file'
-teams_with_most_wins_table_gold              =   gold_table + 'teams_with_most_wins/delta_file'
-teams_with_most_goals_scored_and_conceded_table_gold    =   gold_table + 'teams_with_most_goals_scored_and_conceded/delta_file'
+premier_league_table_gold                  =   gold_table + 'premier_league_table/delta_file'
+teams_with_most_wins_table_gold            =   gold_table + 'teams_with_most_wins/delta_file'
+teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goals_scored/delta_file'
 
 
 
@@ -672,8 +672,8 @@ silver_tbl_df = spark.read.table("football_db.silver_tbl")
 # MAGIC 
 # MAGIC **Create the following tables:**
 # MAGIC * 1. Premier League table
-# MAGIC * 2. Teams with Most Wins/Losses
-# MAGIC * 3. Teams with Most Goals Scored/Conceded
+# MAGIC * 2. Teams with Most Wins
+# MAGIC * 3. Teams with Most Goals Scored
 
 # COMMAND ----------
 
@@ -910,15 +910,15 @@ def plot_teams_with_most_wins_table(df):
 
 # MAGIC %md
 # MAGIC 
-# MAGIC #### 3. Teams with Most Goals Scored/Conceded
+# MAGIC #### 3. Teams with Most Goals Scored
 
 # COMMAND ----------
 
-def create_teams_with_most_goals_scored_and_conceded_table(df):
+def create_teams_with_most_goals_scored_table(df):
     try:
-        print('Using the source gold data frame to create the table for teams with most goals scored/conceded ... ')
+        print('Using the source gold data frame to create the table for teams with most goals scored ... ')
         print('')
-        df.createOrReplaceTempView("teams_with_most_goals_scored_and_conceded_tbl_sql")
+        df.createOrReplaceTempView("teams_with_most_goals_scored_tbl_sql")
 
         df = spark.sql("""
                             SELECT DISTINCT     ranking
@@ -951,8 +951,8 @@ def create_teams_with_most_goals_scored_and_conceded_table(df):
                         ORDER BY   ranking ASC
 
         """)
-        df.write.format("delta").mode("overwrite").save(teams_with_most_goals_scored_and_conceded_table_gold)
-        print(f'Successfully created the delta table for teams with most goals scored/conceded in "{teams_with_most_goals_scored_and_conceded_table_gold}" location ... ')
+        df.write.format("delta").mode("overwrite").save(teams_with_most_goals_scored_table_gold)
+        print(f'Successfully created the delta table for teams with most goals scored in "{teams_with_most_goals_scored_table_gold}" location ... ')
     
     except Exception as e:
         print(e)
@@ -960,15 +960,15 @@ def create_teams_with_most_goals_scored_and_conceded_table(df):
 
 # COMMAND ----------
 
-def plot_teams_with_most_goals_scored_and_conceded_table(df):
+def plot_teams_with_most_goals_scored_table(df):
     try:
-        print('Plotting the table for teams with most goals scored and conceded using Plotly ... ')
+        print('Plotting the table for teams with most goals scored using Plotly ... ')
         print('')
-        df.createOrReplaceTempView("teams_with_most_goals_scored_and_conceded_tbl_sql")
+        df.createOrReplaceTempView("teams_with_most_goals_scored_tbl_sql")
 
         df = spark.sql("""
 
-            SELECT * FROM teams_with_most_goals_scored_and_conceded_tbl_sql    
+            SELECT * FROM teams_with_most_goals_scored_tbl_sql    
 
         """)
 
@@ -978,7 +978,7 @@ def plot_teams_with_most_goals_scored_and_conceded_table(df):
                     x="team",
                     y="goals_for",
                     color="team",
-                     title="Teams with most goals scored and conceded"
+                     title="Teams with most goals scored"
                     )
     
     except Exception as e:
@@ -1057,26 +1057,26 @@ plot_teams_with_most_wins_table(teams_with_most_wins_df)
 
 # MAGIC %md
 # MAGIC 
-# MAGIC #### 3. Teams with Most Goals Scored/Conceded
+# MAGIC #### 3. Teams with Most Goals Scored
 
 # COMMAND ----------
 
 # 1 - Create the delta table for the aggregate
 
-create_teams_with_most_goals_scored_and_conceded_table(gold_tbl_df)
+create_teams_with_most_goals_scored_table(gold_tbl_df)
 
 # COMMAND ----------
 
 # 2 - Read the delta table into a data frame to create an aggregate table
 
-teams_with_most_goals_scored_and_conceded_df = (spark
+teams_with_most_goals_scored_df = (spark
 .read
 .format("delta")
-.load(teams_with_most_goals_scored_and_conceded_table_gold)
+.load(teams_with_most_goals_scored_table_gold)
 )
 
 # COMMAND ----------
 
 # 3 - Visualize the aggregate table
 
-plot_teams_with_most_goals_scored_and_conceded_table(gold_tbl_df)
+plot_teams_with_most_goals_scored_table(gold_tbl_df)
