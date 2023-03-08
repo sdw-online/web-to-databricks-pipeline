@@ -82,7 +82,7 @@ mount_point = f"/mnt/{container_name}-dbfs"
 
 
 # Source locations
-football_data_path_for_src_csv_files    = f"{mount_point}"
+football_data_path_for_src_csv_files    = f"{mount_point}/src/prem-league-raw-data"
 football_data_path_for_src_delta_files  = f"{mount_point}/src/delta"
 
 
@@ -938,9 +938,10 @@ def plot_teams_with_most_wins_table(df):
         print('')
         df.createOrReplaceTempView("teams_with_most_wins_tbl_sql")
 
+        # Use the Premier League temp view 
         df = spark.sql("""
 
-            SELECT * FROM teams_with_most_wins_tbl_sql    
+            SELECT * FROM premier_league_tbl_sql    
 
         """)
 
@@ -1018,10 +1019,12 @@ def plot_teams_with_most_goals_scored_table(df):
         print('Plotting the table for teams with most goals scored using Plotly ... ')
         print('')
         df.createOrReplaceTempView("teams_with_most_goals_scored_tbl_sql")
-
+        
+        
+        # Use the Premier League temp view 
         df = spark.sql("""
 
-            SELECT * FROM teams_with_most_goals_scored_tbl_sql    
+            SELECT * FROM premier_league_tbl_sql    
 
         """)
 
@@ -1039,6 +1042,12 @@ def plot_teams_with_most_goals_scored_table(df):
     
     
     return fig.show()
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC SELECT * FROM teams_with_most_goals_scored_tbl_sql
 
 # COMMAND ----------
 
