@@ -88,6 +88,7 @@ football_data_path_for_src_delta_files  = f"{mount_point}/src/delta"
 
 # Target locations
 football_data_path_for_tgt_delta_files = f"{mount_point}/tgt/delta/league_standings"
+football_data_path_for_tgt_csv_files   = f"{mount_point}/tgt/csv/league_standings"
 
 bronze_output_location  = f"{football_data_path_for_tgt_delta_files}/bronze"
 silver_output_location  = f"{football_data_path_for_tgt_delta_files}/silver"
@@ -840,8 +841,9 @@ def create_premier_league_table(df):
 
         """)
         df.write.format("delta").mode("overwrite").save(premier_league_table_gold)
+        df.write.saveAsTable("football_db.gold_tbl")
         print(f'Successfully created the Premier League delta table in the "{premier_league_table_gold}" location ')
-    
+          
     except Exception as e:
         print(e)
 
@@ -1047,7 +1049,7 @@ def plot_teams_with_most_goals_scored_table(df):
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC SELECT * FROM teams_with_most_goals_scored_tbl_sql
+# MAGIC -- SELECT * FROM teams_with_most_goals_scored_tbl_sql
 
 # COMMAND ----------
 
