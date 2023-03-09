@@ -243,8 +243,8 @@ league_table_schema = StructType([
 
 src_query = (spark.readStream
         .format("csv")
-        .option("header", "true")
-        .option("inferSchema", "false")
+        .option("header", True)
+        .option("inferSchema", False)
         .option("maxFilesPerTrigger", 2)
         .schema(league_table_schema)
         .load(football_data_path_for_src_csv_files)
@@ -1145,3 +1145,8 @@ teams_with_most_goals_scored_df = (spark
 # 3 - Visualize the aggregate table
 
 plot_teams_with_most_goals_scored_table(gold_tbl_df)
+
+# COMMAND ----------
+
+# premier_league_df.orderBy("points", ascending=True)#.first()
+display(premier_league_df.orderBy("points", ascending=True))
