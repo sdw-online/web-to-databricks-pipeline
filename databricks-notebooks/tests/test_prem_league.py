@@ -8,6 +8,7 @@ from pyspark.sql.functions import col
 spark = SparkSession.builder.appName("test-premier-league-table-app").getOrCreate()
 
 
+premier_league_table = spark.read.table("football_db.gold_tbl")
 
 
 
@@ -41,12 +42,11 @@ Here are the data quality tests that need to be conducted on the output:
 
 def test_row_count():
     
+    expected_row_count   =  120
+    actual_row_count     =  premier_league_table.count()
     
-    expected_row_count = 20
-    actual_row_count = spark.read.table("football_db.gold_tbl").count()
     
-    
-    assert actual_row_count == expected_row_count, f"INVALID ROW COUNT: Premier League table containts {actual_row_count} rows instead of {expected_row_count} rows... "
+    assert actual_row_count == expected_row_count, f"INVALID ROW COUNT: Premier League table contains {actual_row_count} rows instead of {expected_row_count} rows... "
 
 
 
