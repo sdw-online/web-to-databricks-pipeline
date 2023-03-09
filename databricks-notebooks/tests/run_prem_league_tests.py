@@ -13,6 +13,10 @@ import sys
 
 # COMMAND ----------
 
+# pip install pytest-html
+
+# COMMAND ----------
+
 repo_name = "tests"
 
 # Get the path to this notebook, for example "/Workspace/Repos/{username}/{repo-name}".
