@@ -1,16 +1,27 @@
 import pytest 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
+from functions_for_dq_tests import check_if_table_exists
 
 
-
-# Create a Spark Session for tests 
+# Create a Spark Session for building the DQ tests 
 spark = SparkSession.builder.appName("test-premier-league-table-app").getOrCreate()
 
-# Read Premier League table to dataframe object 
-premier_league_table = spark.read.table("football_db.gold_tbl")
 
 
+# Create constants for tests 
+database_name = "football_db"
+table_name = "gold_tbl"
+premier_league_table = spark.read.table(f"{database_name}.{table_name}")
+
+
+
+# ================================== TABLE EXISTENCE CHECK ==================================
+
+# Test the table exists in the appropriate database
+
+def test_table_existence():
+    assert check_if_table_exists(table_name, database_name) is True, f"INVALID TABLE: The '{table_name}' table does not exist in the '{database_name}' database ...   "
 
 
 
