@@ -147,7 +147,7 @@ def test_duplicate_records():
 # Test there are no negative values found in the columns (except the goal_difference column)
 
 def test_negative_values():
-    numerical_columns = ["matches_played", "wins", "draws", "losses", "goals_for", "goals_against", "goal_difference", "points"]
+    numerical_columns = ["matches_played", "wins", "draws", "losses", "goals_for", "goals_against", "points"]
     
     for column in numerical_columns:
         expected_negative_values_count = 0 

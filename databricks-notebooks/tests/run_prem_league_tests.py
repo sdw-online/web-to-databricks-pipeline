@@ -1,7 +1,7 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC 
-# MAGIC # Run Premier League Tests
+# MAGIC # Run Premier League Data Quality Tests
 # MAGIC 
 # MAGIC This notebook is for executing the tests for the Premier League table created in the CDC pipeline
 
