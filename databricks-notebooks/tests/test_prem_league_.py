@@ -9,12 +9,6 @@ spark = SparkSession.builder.appName("test-premier-league-table-app").getOrCreat
 
 
 
-database_name = "football_db"
-table_name = "gold_tbl"
-premier_league_table = f"{database_name}.{table_name}"
-
-
-expected_row_count = 20
 
 
 """
@@ -36,9 +30,6 @@ Here are the data quality tests that need to be conducted on the output:
 
 """
 
-@pytest.fixture(scope="module")
-def premier_league_table():
-    return spark.table(premier_league_table)
 
 
 
@@ -48,9 +39,14 @@ def premier_league_table():
 
 # Test that the number of rows is equal to 20
 
-def test_row_count(premier_league_table):
-    actual_row_count = premier_league_table.count()
-    assert premier_league_table.count() == expected_row_count, f"INVALID ROW COUNT: Premier League table containts {actual_row_count} rows instead of {expected_row_count} rows... "
+def test_row_count():
+    
+    
+    expected_row_count = 20
+    actual_row_count = spark.read.table("football_db.gold_tbl").count()
+    
+    
+    assert actual_row_count == expected_row_count, f"INVALID ROW COUNT: Premier League table containts {actual_row_count} rows instead of {expected_row_count} rows... "
 
 
 
