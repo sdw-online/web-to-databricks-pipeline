@@ -841,6 +841,7 @@ def create_premier_league_table(df):
 
         """)
         df.write.format("delta").mode("overwrite").save(premier_league_table_gold)
+        spark.sql(""" DROP TABLE IF EXISTS football_db.gold_tbl """)
         df.write.saveAsTable("football_db.gold_tbl")
         print(f'Successfully created the Premier League delta table in the "{premier_league_table_gold}" location ')
           
