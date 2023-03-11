@@ -118,10 +118,10 @@ tenant_id                      =    dbutils.secrets.get(scope="azure", key="tena
 
 
 subscription_id                =    dbutils.secrets.get(scope="azure", key="subscription_id")
-connection_string              =    dbutils.secrets.get(scope="azure", key="sas_connection_string")
-# connection_string              =    dbutils.secrets.get(scope="azure", key="autoloader_connection_string")
+connection_string              =    dbutils.secrets.get(scope="azure", key="connection_string")
 resource_group                 =    dbutils.secrets.get(scope="azure", key="resource_group")
 
+queue_connection_string       = dbutils.secrets.get(scope="azure", key="queue_service_sas_url")
 
 schema_location                =    f"{mount_point}/src/_schema/prem_league_schema.csv"
 # print(schema_location)
@@ -135,23 +135,22 @@ schema_location                =    f"{mount_point}/src/_schema/prem_league_sche
 # COMMAND ----------
 
 autoloader_config = {
-"cloudFiles.format":"csv",
+"cloudFiles.format": "csv",
 "cloudFiles.clientId": client_id,
 "cloudFiles.clientSecret": client_secret,
 "cloudFiles.tenantId": tenant_id,
 "cloudFiles.subscriptionId": subscription_id,
 "cloudFiles.connectionString": connection_string,
 "clientFiles.resourceGroup": resource_group,
-"cloudFiles.schemaLocation":schema_location,
-"clientFiles.useNotifications": False,
+"cloudFiles.schemaLocation": schema_location,
+"clientFiles.useNotifications": True,
 "inferSchema": False,
 "header": True
 }
 
 # COMMAND ----------
 
-# List the objects in the DBFS mount point 
-# dbutils.fs.ls(f"{football_data_path_for_src_csv_files}")
+# spark.conf.set("fs.azure.account.key.landingspot.blob.core.windows.net", )
 
 # COMMAND ----------
 
@@ -279,6 +278,10 @@ src_query = (spark.readStream
              .schema(league_table_schema)
              .load(football_data_path_for_src_csv_files)
      )
+
+# COMMAND ----------
+
+display(src_query)
 
 # COMMAND ----------
 
