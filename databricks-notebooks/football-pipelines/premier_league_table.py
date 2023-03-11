@@ -67,8 +67,8 @@
 
 # COMMAND ----------
 
-storage_account_name = dbutils.secrets.get(scope="azure", key="storage_account_name")
-container_name = dbutils.secrets.get(scope="azure", key="container_name")
+storage_account_name = dbutils.secrets.get(scope="azure-02", key="storage_account_name")
+container_name = dbutils.secrets.get(scope="azure-02", key="container_name")
 
 
 source_path = f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net"
@@ -76,7 +76,7 @@ mount_point = f"/mnt/{container_name}-dbfs"
 
 
 # Source locations
-football_data_path_for_src_csv_files    = f"{mount_point}/src/prem-league-raw-data"
+football_data_path_for_src_csv_files    = f"{mount_point}/src/prem-league-raw-data/*.csv"
 football_data_path_for_src_delta_files  = f"{mount_point}/src/delta"
 
 
@@ -112,16 +112,16 @@ teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goa
 
 # COMMAND ----------
 
-client_id                      =    dbutils.secrets.get(scope="azure", key="client_id")
-client_secret                  =    dbutils.secrets.get(scope="azure", key="client_secret")
-tenant_id                      =    dbutils.secrets.get(scope="azure", key="tenant_id")
+client_id                      =    dbutils.secrets.get(scope="azure-02", key="client_id")
+client_secret                  =    dbutils.secrets.get(scope="azure-02", key="client_secret")
+tenant_id                      =    dbutils.secrets.get(scope="azure-02", key="tenant_id")
 
 
-subscription_id                =    dbutils.secrets.get(scope="azure", key="subscription_id")
-connection_string              =    dbutils.secrets.get(scope="azure", key="connection_string")
-resource_group                 =    dbutils.secrets.get(scope="azure", key="resource_group")
+subscription_id                =    dbutils.secrets.get(scope="azure-02", key="subscription_id")
+connection_string              =    dbutils.secrets.get(scope="azure-02", key="connection_string")
+resource_group                 =    dbutils.secrets.get(scope="azure-02", key="resource_group")
 
-queue_connection_string       = dbutils.secrets.get(scope="azure", key="queue_service_sas_url")
+queue_connection_string       = dbutils.secrets.get(scope="azure-02", key="queue_service_sas_url")
 
 schema_location                =    f"{mount_point}/src/_schema/prem_league_schema.csv"
 # print(schema_location)
@@ -143,7 +143,7 @@ autoloader_config = {
 "cloudFiles.connectionString": connection_string,
 "clientFiles.resourceGroup": resource_group,
 "cloudFiles.schemaLocation": schema_location,
-"clientFiles.useNotifications": True,
+"clientFiles.useNotifications": "true",
 "inferSchema": False,
 "header": True
 }
@@ -272,16 +272,41 @@ league_table_schema = StructType([
 
 # COMMAND ----------
 
+autoloader_config = {
+"cloudFiles.format": "csv",
+"cloudFiles.clientId": client_id,
+"cloudFiles.clientSecret": client_secret,
+"cloudFiles.tenantId": tenant_id,
+"cloudFiles.subscriptionId": subscription_id,
+"cloudFiles.connectionString": connection_string,
+"clientFiles.resourceGroup": resource_group,
+"cloudFiles.schemaLocation": schema_location,
+"clientFiles.useNotifications": "true",
+"inferSchema": False,
+"header": True
+}
+
+# COMMAND ----------
+
 src_query = (spark.readStream
              .format("cloudFiles")
-             .options(**autoloader_config)
+             .option("cloudFiles.format", "csv")
+             .option("cloudFiles.clientId", client_id)
+             .option("cloudFiles.clientSecret", client_secret)
+             .option("cloudFiles.tenantId", tenant_id)
+             .option("cloudFiles.subscriptionId", subscription_id)
+             .option("cloudFiles.connectionString", connection_string)
+             .option("cloudFiles.resourceGroup", resource_group)
+#              .option("cloudFiles.schemaLocation", schema_location)
+             .option("cloudFiles.useNotifications", "true")
+#              .options(**autoloader_config)
              .schema(league_table_schema)
              .load(football_data_path_for_src_csv_files)
      )
 
 # COMMAND ----------
 
-display(src_query)
+# display(src_query)
 
 # COMMAND ----------
 
