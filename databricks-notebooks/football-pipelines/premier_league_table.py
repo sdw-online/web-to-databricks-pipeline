@@ -118,11 +118,13 @@ tenant_id                      =    dbutils.secrets.get(scope="azure", key="tena
 
 
 subscription_id                =    dbutils.secrets.get(scope="azure", key="subscription_id")
+# connection_string              =    dbutils.secrets.get(scope="azure", key="sas_connection_string")
 connection_string              =    dbutils.secrets.get(scope="azure", key="autoloader_connection_string")
 resource_group                 =    dbutils.secrets.get(scope="azure", key="resource_group")
 
 
 schema_location                =    f"{mount_point}/src/_schema/prem_league_schema.csv"
+# print(schema_location)
 
 # COMMAND ----------
 
@@ -245,8 +247,7 @@ autoloader_config = {
 "cloudFiles.subscriptionId": subscription_id,
 "cloudFiles.connectionString": connection_string,
 "clientFiles.resourceGroup": resource_group,
-"cloudFiles.schema": league_table_schema,
-# "cloudFiles.schemaLocation":schema_location,
+"cloudFiles.schemaLocation":schema_location,
 "clientFiles.useNotifications": True,
 "header": True
 }
@@ -273,13 +274,9 @@ autoloader_config = {
 
 src_query = (spark.readStream
              .format("cloudFiles")
-#         .format("csv")
-        .options(**autoloader_config)
-#         .option("header", True)
-#         .option("inferSchema", False)
-#         .option("maxFilesPerTrigger", 2)
-#         .schema(league_table_schema)
-        .load(football_data_path_for_src_csv_files)
+             .options(**autoloader_config)
+             .option("inferSchema", True)
+             .load(football_data_path_for_src_csv_files)
      )
 
 # COMMAND ----------
