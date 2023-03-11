@@ -118,8 +118,8 @@ tenant_id                      =    dbutils.secrets.get(scope="azure", key="tena
 
 
 subscription_id                =    dbutils.secrets.get(scope="azure", key="subscription_id")
-# connection_string              =    dbutils.secrets.get(scope="azure", key="sas_connection_string")
-connection_string              =    dbutils.secrets.get(scope="azure", key="autoloader_connection_string")
+connection_string              =    dbutils.secrets.get(scope="azure", key="sas_connection_string")
+# connection_string              =    dbutils.secrets.get(scope="azure", key="autoloader_connection_string")
 resource_group                 =    dbutils.secrets.get(scope="azure", key="resource_group")
 
 
@@ -143,7 +143,8 @@ autoloader_config = {
 "cloudFiles.connectionString": connection_string,
 "clientFiles.resourceGroup": resource_group,
 "cloudFiles.schemaLocation":schema_location,
-"clientFiles.useNotifications": True,
+"clientFiles.useNotifications": False,
+"inferSchema": False,
 "header": True
 }
 
@@ -275,7 +276,7 @@ league_table_schema = StructType([
 src_query = (spark.readStream
              .format("cloudFiles")
              .options(**autoloader_config)
-             .option("inferSchema", True)
+             .schema(league_table_schema)
              .load(football_data_path_for_src_csv_files)
      )
 
