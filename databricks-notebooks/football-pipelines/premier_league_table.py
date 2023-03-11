@@ -163,8 +163,8 @@ autoloader_config = {
 # Delete objects for this session (checkpoint locations, tables etc)
 
 
-DELETE_SESSION_OBJECTS = True
-# DELETE_SESSION_OBJECTS = False
+# DELETE_SESSION_OBJECTS = True
+DELETE_SESSION_OBJECTS = False
 
 
 if DELETE_SESSION_OBJECTS:
@@ -297,8 +297,9 @@ src_query = (spark.readStream
              .option("cloudFiles.subscriptionId", subscription_id)
              .option("cloudFiles.connectionString", connection_string)
              .option("cloudFiles.resourceGroup", resource_group)
-             .option("cloudFiles.schemaEvolutionMode", "rescue")
              .option("cloudFiles.useNotifications", False)
+             .option("cloudFiles.validateOptions", False)
+             .option("header", True)
              .schema(league_table_schema)
              .load(football_data_path_for_src_csv_files)
      )
@@ -348,22 +349,7 @@ bronze_streaming_query = (src_query
 
 # COMMAND ----------
 
-dbutils.notebook.exit("stop")
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC ### List the objects in the Delta folder in DBFS
-
-# COMMAND ----------
-
-# List the objects in the DBFS mount point where the Delta files reside
-# dbutils.fs.ls(f"{football_data_path_for_tgt_delta_files}")
-
-# COMMAND ----------
-
-# stop_here_and_re_execute_script
+dbutils.notebook.exit("Terminating the bronze query")
 
 # COMMAND ----------
 
@@ -691,11 +677,15 @@ silver_streaming_df_1 =  (silver_streaming_df_1.transform(rename_columns)
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Create silver table in Hive metastore
+# MAGIC ### Create 1st silver table in Hive metastore
 
 # COMMAND ----------
 
-spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl;  """)
+# spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_1; """)
+
+# COMMAND ----------
+
+spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl_1;  """)
 
 # COMMAND ----------
 
@@ -714,7 +704,7 @@ silver_streaming_df_2 = (silver_streaming_df_1
                           .option("mergeSchema", True)
                           .option("ignoreChanges", False)
                           .trigger(once=True)
-                          .toTable("football_db.silver_tbl") 
+                          .toTable("football_db.silver_tbl_1") 
 )
 
 # COMMAND ----------
@@ -731,7 +721,7 @@ dbutils.notebook.exit("stop")
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Display the data profiling metrics
+# MAGIC ### Display the data profiling metrics for silver streaming query
 
 # COMMAND ----------
 
@@ -762,15 +752,60 @@ else:
 
 # MAGIC %sql 
 # MAGIC 
-# MAGIC DESCRIBE HISTORY football_db.silver_tbl
+# MAGIC DESCRIBE HISTORY football_db.silver_tbl_1
 # MAGIC 
 # MAGIC -- select * from football_db.bronze_tbl version as of 1
 
 # COMMAND ----------
 
-# MAGIC %sql
+# MAGIC %md
 # MAGIC 
-# MAGIC SELECT * FROM football_db.silver_tbl
+# MAGIC ### Create 2nd silver table in Hive metastore + Drop duplicates form previous append operations
+
+# COMMAND ----------
+
+spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_2; """)
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC SELECT DISTINCT * 
+# MAGIC   FROM football_db.silver_tbl_1
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC   
+# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl_2 as 
+# MAGIC   SELECT DISTINCT * 
+# MAGIC   FROM football_db.silver_tbl_1
+# MAGIC   ; 
+# MAGIC   
+# MAGIC SELECT * FROM football_db.silver_tbl_2; 
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Display the data profiling metrics for silver zone outputs
+
+# COMMAND ----------
+
+# Convert Hive table into data frame 
+silver_tbl_df = spark.read.table("football_db.silver_tbl_2")
+
+silver_row_count = silver_tbl_df.count()
+silver_column_count = len(silver_tbl_df.columns)
+
+
+
+print(f'=================== DATA PROFILING METRICS: SILVER ===================')
+print(f'======================================================================')
+print(f'')
+print(f'Row count:               {silver_row_count}')
+print(f'Column count:            {silver_column_count}  ')
+# print(f'Sink:                                    "{silver_sink}" ')
 
 # COMMAND ----------
 
@@ -779,10 +814,6 @@ else:
 # MAGIC ### Save Hive tables as silver delta tables
 
 # COMMAND ----------
-
-# Convert Hive table into data frame 
-silver_tbl_df = spark.read.table("football_db.silver_tbl")
-
 
 # Write silver table data frame to delta table
 (silver_tbl_df
@@ -848,13 +879,6 @@ gold_tbl_df.persist(StorageLevel.MEMORY_ONLY)
 
 # COMMAND ----------
 
-# MAGIC %md 
-# MAGIC 
-# MAGIC ### Drop duplicates form previous append operations
-
-# COMMAND ----------
-
-gold_tbl_df = gold_tbl_df.dropDuplicates()
 display(gold_tbl_df)
 
 # COMMAND ----------
@@ -1121,12 +1145,6 @@ def plot_teams_with_most_goals_scored_table(df):
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC -- SELECT * FROM teams_with_most_goals_scored_tbl_sql
-
-# COMMAND ----------
-
 
 
 # COMMAND ----------
@@ -1222,4 +1240,4 @@ plot_teams_with_most_goals_scored_table(gold_tbl_df)
 # COMMAND ----------
 
 # premier_league_df.orderBy("points", ascending=True)#.first()
-display(premier_league_df.orderBy("points", ascending=True))
+display(premier_league_df.orderBy(["points", "goal_difference"], ascending=False))
