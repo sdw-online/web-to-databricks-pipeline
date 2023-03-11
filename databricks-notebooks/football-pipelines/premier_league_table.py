@@ -128,6 +128,27 @@ schema_location                =    f"{mount_point}/src/_schema/prem_league_sche
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC 
+# MAGIC #### Configure Autoloader file notifications 
+
+# COMMAND ----------
+
+autoloader_config = {
+"cloudFiles.format":"csv",
+"cloudFiles.clientId": client_id,
+"cloudFiles.clientSecret": client_secret,
+"cloudFiles.tenantId": tenant_id,
+"cloudFiles.subscriptionId": subscription_id,
+"cloudFiles.connectionString": connection_string,
+"clientFiles.resourceGroup": resource_group,
+"cloudFiles.schemaLocation":schema_location,
+"clientFiles.useNotifications": True,
+"header": True
+}
+
+# COMMAND ----------
+
 # List the objects in the DBFS mount point 
 # dbutils.fs.ls(f"{football_data_path_for_src_csv_files}")
 
@@ -230,27 +251,6 @@ league_table_schema = StructType([
     StructField("match_date", DateType(), True)
     
 ])
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC #### Configure Autoloader file notifications 
-
-# COMMAND ----------
-
-autoloader_config = {
-"cloudFiles.format":"csv",
-"cloudFiles.clientId": client_id,
-"cloudFiles.clientSecret": client_secret,
-"cloudFiles.tenantId": tenant_id,
-"cloudFiles.subscriptionId": subscription_id,
-"cloudFiles.connectionString": connection_string,
-"clientFiles.resourceGroup": resource_group,
-"cloudFiles.schemaLocation":schema_location,
-"clientFiles.useNotifications": True,
-"header": True
-}
 
 # COMMAND ----------
 
