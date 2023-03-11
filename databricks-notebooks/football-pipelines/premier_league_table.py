@@ -281,7 +281,7 @@ autoloader_config = {
 "cloudFiles.connectionString": connection_string,
 "clientFiles.resourceGroup": resource_group,
 "cloudFiles.schemaLocation": schema_location,
-"clientFiles.useNotifications": "true",
+"clientFiles.useNotifications": False,
 "inferSchema": False,
 "header": True
 }
@@ -297,9 +297,8 @@ src_query = (spark.readStream
              .option("cloudFiles.subscriptionId", subscription_id)
              .option("cloudFiles.connectionString", connection_string)
              .option("cloudFiles.resourceGroup", resource_group)
-#              .option("cloudFiles.schemaLocation", schema_location)
-             .option("cloudFiles.useNotifications", "true")
-#              .options(**autoloader_config)
+             .option("cloudFiles.schemaEvolutionMode", "rescue")
+             .option("cloudFiles.useNotifications", False)
              .schema(league_table_schema)
              .load(football_data_path_for_src_csv_files)
      )
