@@ -67,14 +67,8 @@
 
 # COMMAND ----------
 
-client_id = dbutils.secrets.get(scope="azure", key="client_id")
-client_secret = dbutils.secrets.get(scope="azure", key="client_secret")
-tenant_id = dbutils.secrets.get(scope="azure", key="tenant_id")
 storage_account_name = dbutils.secrets.get(scope="azure", key="storage_account_name")
 container_name = dbutils.secrets.get(scope="azure", key="container_name")
-sas_token = dbutils.secrets.get(scope="azure", key="sas_token")
-sas_connection_string = dbutils.secrets.get(scope="azure", key="sas_connection_string")
-blob_service_sas_url = dbutils.secrets.get(scope="azure", key="blob_service_sas_url")
 
 
 source_path = f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net"
@@ -118,6 +112,44 @@ teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goa
 
 # COMMAND ----------
 
+client_id                      =    dbutils.secrets.get(scope="azure", key="client_id")
+client_secret                  =    dbutils.secrets.get(scope="azure", key="client_secret")
+tenant_id                      =    dbutils.secrets.get(scope="azure", key="tenant_id")
+
+
+subscription_id                =    dbutils.secrets.get(scope="azure", key="subscription_id")
+connection_string              =    dbutils.secrets.get(scope="azure", key="sas_connection_string")
+# connection_string              =    dbutils.secrets.get(scope="azure", key="autoloader_connection_string")
+resource_group                 =    dbutils.secrets.get(scope="azure", key="resource_group")
+
+
+schema_location                =    f"{mount_point}/src/_schema/prem_league_schema.csv"
+# print(schema_location)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC #### Configure Autoloader file notifications 
+
+# COMMAND ----------
+
+autoloader_config = {
+"cloudFiles.format":"csv",
+"cloudFiles.clientId": client_id,
+"cloudFiles.clientSecret": client_secret,
+"cloudFiles.tenantId": tenant_id,
+"cloudFiles.subscriptionId": subscription_id,
+"cloudFiles.connectionString": connection_string,
+"clientFiles.resourceGroup": resource_group,
+"cloudFiles.schemaLocation":schema_location,
+"clientFiles.useNotifications": False,
+"inferSchema": False,
+"header": True
+}
+
+# COMMAND ----------
+
 # List the objects in the DBFS mount point 
 # dbutils.fs.ls(f"{football_data_path_for_src_csv_files}")
 
@@ -132,8 +164,8 @@ teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goa
 # Delete objects for this session (checkpoint locations, tables etc)
 
 
-# DELETE_SESSION_OBJECTS = True
-DELETE_SESSION_OBJECTS = False
+DELETE_SESSION_OBJECTS = True
+# DELETE_SESSION_OBJECTS = False
 
 
 if DELETE_SESSION_OBJECTS:
@@ -242,12 +274,10 @@ league_table_schema = StructType([
 # COMMAND ----------
 
 src_query = (spark.readStream
-        .format("csv")
-        .option("header", True)
-        .option("inferSchema", False)
-        .option("maxFilesPerTrigger", 2)
-        .schema(league_table_schema)
-        .load(football_data_path_for_src_csv_files)
+             .format("cloudFiles")
+             .options(**autoloader_config)
+             .schema(league_table_schema)
+             .load(football_data_path_for_src_csv_files)
      )
 
 # COMMAND ----------
@@ -282,6 +312,16 @@ bronze_streaming_query = (src_query
                           .trigger(once=True)
                           .toTable("football_db.bronze_tbl") 
                          )
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Stop notebook execution once streaming job is complete
+
+# COMMAND ----------
+
+dbutils.notebook.exit("stop")
 
 # COMMAND ----------
 
@@ -652,7 +692,13 @@ silver_streaming_df_2 = (silver_streaming_df_1
 
 # COMMAND ----------
 
-# stop_here_and_re_execute_script
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Stop notebook execution once streaming job is complete
+
+# COMMAND ----------
+
+dbutils.notebook.exit("stop")
 
 # COMMAND ----------
 
