@@ -11,14 +11,14 @@
 
 # COMMAND ----------
 
-client_id                      =    dbutils.secrets.get(scope="azure", key="client_id")
-client_secret                  =    dbutils.secrets.get(scope="azure", key="client_secret")
-tenant_id                      =    dbutils.secrets.get(scope="azure", key="tenant_id")
-storage_account_name           =    dbutils.secrets.get(scope="azure", key="storage_account_name")
-container_name                 =    dbutils.secrets.get(scope="azure", key="container_name")
-sas_token                      =    dbutils.secrets.get(scope="azure", key="sas_token")
-sas_connection_string          =    dbutils.secrets.get(scope="azure", key="sas_connection_string")
-blob_service_sas_url           =    dbutils.secrets.get(scope="azure", key="blob_service_sas_url")
+client_id                      =    dbutils.secrets.get(scope="azure-02", key="client_id")
+client_secret                  =    dbutils.secrets.get(scope="azure-02", key="client_secret")
+tenant_id                      =    dbutils.secrets.get(scope="azure-02", key="tenant_id")
+storage_account_name           =    dbutils.secrets.get(scope="azure-02", key="storage_account_name")
+container_name                 =    dbutils.secrets.get(scope="azure-02", key="container_name")
+sas_token                      =    dbutils.secrets.get(scope="azure-02", key="sas_token")
+sas_connection_string          =    dbutils.secrets.get(scope="azure-02", key="connection_string")
+# blob_service_sas_url           =    dbutils.secrets.get(scope="azure-02", key="blob_service_sas_url")
 
 
 source_path = f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net"
