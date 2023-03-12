@@ -163,8 +163,8 @@ autoloader_config = {
 # Delete objects for this session (checkpoint locations, tables etc)
 
 
-# DELETE_SESSION_OBJECTS = True
-DELETE_SESSION_OBJECTS = False
+DELETE_SESSION_OBJECTS = True
+# DELETE_SESSION_OBJECTS = False
 
 
 if DELETE_SESSION_OBJECTS:
@@ -185,6 +185,18 @@ if DELETE_SESSION_OBJECTS:
         
         spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl; """)
         print(">>> 3. Deleted SILVER TABLE successfully")
+        
+        
+        spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl_audit_log; """)
+        print(">>> 4. Deleted audit log for BRONZE TABLE successfully")
+        
+        
+        spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_audit_log; """)
+        print(">>> 5. Deleted audit log for SILVER TABLE successfully")
+        
+               
+        
+        
         
         print('')
         print(">>>  Deleted all session objects successfully ")
@@ -355,7 +367,87 @@ dbutils.notebook.exit("Terminating the bronze query")
 
 # MAGIC %md
 # MAGIC 
+# MAGIC ### Save Hive tables as bronze delta tables
+
+# COMMAND ----------
+
+# Convert Hive table into data frame 
+bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
+
+
+# Write bronze table data frame to delta table
+(bronze_tbl_df
+     .write
+     .format("delta")
+     .mode("append")
+     .option("mergeSchema", True)
+     .save(bronze_table)
+)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
 # MAGIC ### Display the data profiling metrics
+# MAGIC 
+# MAGIC Create custom audit logs to analyse streaming job performance 
+
+# COMMAND ----------
+
+from delta.tables import * 
+
+
+# Read delta file into Delta table instance
+bronze_delta_df = DeltaTable.forPath(spark, bronze_table)
+
+bronze_tbl_audit_log_df = bronze_delta_df.history() 
+display(bronze_tbl_audit_log_df)
+
+# COMMAND ----------
+
+from pyspark.sql.functions import explode
+
+
+# Explode the required columns 
+explode_bronze_tbl_audit_log_df_1 = bronze_tbl_audit_log_df.select(bronze_tbl_audit_log_df.operation, 
+                                                                 explode(bronze_tbl_audit_log_df.operationMetrics)
+                                                                )
+
+explode_bronze_tbl_audit_log_df_2 = explode_bronze_tbl_audit_log_df_1.select(explode_bronze_tbl_audit_log_df_1.operation,
+                                                                            explode_bronze_tbl_audit_log_df_1.key,
+                                                                            explode_bronze_tbl_audit_log_df_1.value.cast('int'))
+
+display(explode_bronze_tbl_audit_log_df_2)
+
+# COMMAND ----------
+
+# Create a pivot table to convert the audit log records to fields
+final_audit_log_bronze_df = explode_bronze_tbl_audit_log_df_2.groupBy("operation").pivot("key").sum("value")
+final_audit_log_bronze_df.createOrReplaceTempView("last_operations_log_bronze_tbl")
+display(final_audit_log_bronze_df)
+
+# COMMAND ----------
+
+# Create audit log table for bronze_tbl
+spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.bronze_tbl_audit_log (
+                operation STRING,
+                numFiles INT,
+                numOutputRows INT,
+                numOutputBytes INT                 
+                )
+; """)
+
+# Log operations history of last streaming query to audit log 
+spark.sql("""  INSERT INTO football_db.bronze_tbl_audit_log 
+                    SELECT * FROM last_operations_log_bronze_tbl;
+                    
+                """)
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC SELECT * FROM football_db.bronze_tbl_audit_log
 
 # COMMAND ----------
 
@@ -397,27 +489,6 @@ else:
 # MAGIC %sql
 # MAGIC 
 # MAGIC SELECT * FROM football_db.bronze_tbl
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC ### Save Hive tables as bronze delta tables
-
-# COMMAND ----------
-
-# Convert Hive table into data frame 
-bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
-
-
-# Write bronze table data frame to delta table
-(bronze_tbl_df
-     .write
-     .format("delta")
-     .mode("append")
-     .option("mergeSchema", True)
-     .save(bronze_table)
-)
 
 # COMMAND ----------
 
