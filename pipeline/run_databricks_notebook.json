@@ -1,0 +1,28 @@
+{
+	"name": "run_databricks_notebook",
+	"properties": {
+		"activities": [
+			{
+				"name": "execute_etl_job_in_databricks",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Repos/stephenoilesanmi@gmail.com/web-to-databricks-pipeline/databricks-notebooks/football-pipelines/premier_league_table"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": []
+	}
+}
