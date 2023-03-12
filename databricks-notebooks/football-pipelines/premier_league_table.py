@@ -163,8 +163,8 @@ autoloader_config = {
 # Delete objects for this session (checkpoint locations, tables etc)
 
 
-DELETE_SESSION_OBJECTS = True
-# DELETE_SESSION_OBJECTS = False
+# DELETE_SESSION_OBJECTS = True
+DELETE_SESSION_OBJECTS = False
 
 
 if DELETE_SESSION_OBJECTS:
@@ -179,20 +179,29 @@ if DELETE_SESSION_OBJECTS:
         
         # Drop Hive tables
         
+        # A. Bronze tables
         spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl; """)
         print(">>> 2. Deleted BRONZE TABLE successfully")
         
+        # B. Silver tables
+        spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_1; """)
+        print(">>> 3. Deleted SILVER TABLE 1 successfully")
         
-        spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl; """)
-        print(">>> 3. Deleted SILVER TABLE successfully")
+        
+        spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_2; """)
+        print(">>> 4. Deleted SILVER TABLE 2 successfully")
+        
+        # C. Gold tables
+        spark.sql(""" DROP TABLE IF EXISTS football_db.gold_tbl; """)
+        print(">>> 5. Deleted GOLD TABLE successfully")
         
         
         spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl_audit_log; """)
-        print(">>> 4. Deleted audit log for BRONZE TABLE successfully")
+        print(">>> 6. Deleted audit log for BRONZE TABLE successfully")
         
         
         spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_audit_log; """)
-        print(">>> 5. Deleted audit log for SILVER TABLE successfully")
+        print(">>> 7. Deleted audit log for SILVER TABLE successfully")
         
                
         
@@ -409,21 +418,29 @@ from pyspark.sql.functions import explode
 
 
 # Explode the required columns 
-explode_bronze_tbl_audit_log_df_1 = bronze_tbl_audit_log_df.select(bronze_tbl_audit_log_df.operation, 
-                                                                 explode(bronze_tbl_audit_log_df.operationMetrics)
+explode_bronze_tbl_audit_log_df_1 = bronze_tbl_audit_log_df.select(bronze_tbl_audit_log_df.version,
+                                                                   bronze_tbl_audit_log_df.timestamp,
+                                                                   bronze_tbl_audit_log_df.userId,
+                                                                   bronze_tbl_audit_log_df.userName,
+                                                                   bronze_tbl_audit_log_df.operation, 
+                                                                   explode(bronze_tbl_audit_log_df.operationMetrics)
                                                                 )
 
-explode_bronze_tbl_audit_log_df_2 = explode_bronze_tbl_audit_log_df_1.select(explode_bronze_tbl_audit_log_df_1.operation,
-                                                                            explode_bronze_tbl_audit_log_df_1.key,
-                                                                            explode_bronze_tbl_audit_log_df_1.value.cast('int'))
+explode_bronze_tbl_audit_log_df_2 = explode_bronze_tbl_audit_log_df_1.select(bronze_tbl_audit_log_df.version,
+                                                                             bronze_tbl_audit_log_df.timestamp,
+                                                                             bronze_tbl_audit_log_df.userId,
+                                                                             bronze_tbl_audit_log_df.userName,
+                                                                             explode_bronze_tbl_audit_log_df_1.operation,
+                                                                             explode_bronze_tbl_audit_log_df_1.key,
+                                                                             explode_bronze_tbl_audit_log_df_1.value.cast('int'))
 
 display(explode_bronze_tbl_audit_log_df_2)
 
 # COMMAND ----------
 
 # Create a pivot table to convert the audit log records to fields
-final_audit_log_bronze_df = explode_bronze_tbl_audit_log_df_2.groupBy("operation").pivot("key").sum("value")
-final_audit_log_bronze_df.createOrReplaceTempView("last_operations_log_bronze_tbl")
+final_audit_log_bronze_df = explode_bronze_tbl_audit_log_df_2.groupBy("operation", "version", "timestamp", "userId", "userName").pivot("key").sum("value")
+final_audit_log_bronze_df.createOrReplaceTempView("load_last_operation_to_bronze_audit_tbl")
 display(final_audit_log_bronze_df)
 
 # COMMAND ----------
@@ -431,6 +448,10 @@ display(final_audit_log_bronze_df)
 # Create audit log table for bronze_tbl
 spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.bronze_tbl_audit_log (
                 operation STRING,
+                version STRING,
+                timestamp TIMESTAMP,
+                userID DOUBLE,
+                userName STRING,
                 numFiles INT,
                 numOutputRows INT,
                 numOutputBytes INT                 
@@ -439,7 +460,7 @@ spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.bronze_tbl_audit_log (
 
 # Log operations history of last streaming query to audit log 
 spark.sql("""  INSERT INTO football_db.bronze_tbl_audit_log 
-                    SELECT * FROM last_operations_log_bronze_tbl;
+                    SELECT * FROM load_last_operation_to_bronze_audit_tbl;
                     
                 """)
 
@@ -447,7 +468,8 @@ spark.sql("""  INSERT INTO football_db.bronze_tbl_audit_log
 
 # MAGIC %sql 
 # MAGIC 
-# MAGIC SELECT * FROM football_db.bronze_tbl_audit_log
+# MAGIC SELECT * FROM football_db.bronze_tbl_audit_log;
+# MAGIC -- drop table football_db.bronze_tbl_audit_log
 
 # COMMAND ----------
 
@@ -790,9 +812,7 @@ dbutils.notebook.exit("stop")
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC 
-# MAGIC ### Display the data profiling metrics for silver streaming query
+
 
 # COMMAND ----------
 
@@ -894,6 +914,81 @@ print(f'Column count:            {silver_column_count}  ')
      .option("mergeSchema", True)
      .save(silver_table)
 )
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Display the data profiling metrics for silver streaming query
+
+# COMMAND ----------
+
+
+# Read delta file into Delta table instance
+silver_delta_df = DeltaTable.forPath(spark, silver_table)
+
+silver_tbl_audit_log_df = silver_delta_df.history() 
+display(silver_tbl_audit_log_df)
+
+# COMMAND ----------
+
+from pyspark.sql.functions import explode
+
+
+# Explode the required columns 
+explode_silver_tbl_audit_log_df_1 = silver_tbl_audit_log_df.select(silver_tbl_audit_log_df.version,
+                                                                   silver_tbl_audit_log_df.timestamp,
+                                                                   silver_tbl_audit_log_df.userId,
+                                                                   silver_tbl_audit_log_df.userName,
+                                                                   silver_tbl_audit_log_df.operation, 
+                                                                   explode(silver_tbl_audit_log_df.operationMetrics)
+                                                                )
+
+explode_silver_tbl_audit_log_df_2 = explode_silver_tbl_audit_log_df_1.select(silver_tbl_audit_log_df.version,
+                                                                             silver_tbl_audit_log_df.timestamp,
+                                                                             silver_tbl_audit_log_df.userId,
+                                                                             silver_tbl_audit_log_df.userName,
+                                                                             explode_silver_tbl_audit_log_df_1.operation,
+                                                                             explode_silver_tbl_audit_log_df_1.key,
+                                                                             explode_silver_tbl_audit_log_df_1.value.cast('int'))
+
+display(explode_silver_tbl_audit_log_df_2)
+
+# COMMAND ----------
+
+# Create a pivot table to convert the audit log records to fields
+final_audit_log_silver_df = explode_silver_tbl_audit_log_df_2.groupBy("operation", "version", "timestamp", "userId", "userName").pivot("key").sum("value")
+final_audit_log_silver_df = final_audit_log_silver_df.orderBy("version", ascending=False)
+final_audit_log_silver_df.createOrReplaceTempView("load_last_operation_to_silver_audit_tbl")
+display(final_audit_log_silver_df)
+
+# COMMAND ----------
+
+# Create audit log table for silver_tbl
+spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl_audit_log (
+                operation STRING,
+                version STRING,
+                timestamp TIMESTAMP,
+                userID DOUBLE,
+                userName STRING,
+                numFiles INT,
+                numOutputRows INT,
+                numOutputBytes INT                 
+                )
+; """)
+
+# Log operations history of last streaming query to audit log 
+spark.sql("""  INSERT INTO football_db.silver_tbl_audit_log 
+                    SELECT * FROM load_last_operation_to_silver_audit_tbl;
+                    
+                """)
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC SELECT DISTINCT * FROM football_db.silver_tbl_audit_log;
+# MAGIC -- drop table football_db.silver_tbl_audit_log
 
 # COMMAND ----------
 
