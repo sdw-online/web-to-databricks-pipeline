@@ -108,8 +108,6 @@ premier_league_table_gold                  =   gold_table + 'premier_league_tabl
 teams_with_most_wins_table_gold            =   gold_table + 'teams_with_most_wins/delta_file'
 teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goals_scored/delta_file'
 
-
-
 # COMMAND ----------
 
 client_id                      =    dbutils.secrets.get(scope="azure-02", key="client_id")
@@ -124,7 +122,6 @@ resource_group                 =    dbutils.secrets.get(scope="azure-02", key="r
 queue_connection_string       = dbutils.secrets.get(scope="azure-02", key="queue_service_sas_url")
 
 schema_location                =    f"{mount_point}/src/_schema/prem_league_schema.csv"
-# print(schema_location)
 
 # COMMAND ----------
 
@@ -147,10 +144,6 @@ autoloader_config = {
 "inferSchema": False,
 "header": True
 }
-
-# COMMAND ----------
-
-# spark.conf.set("fs.azure.account.key.landingspot.blob.core.windows.net", )
 
 # COMMAND ----------
 
@@ -281,9 +274,7 @@ league_table_schema = StructType([
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC CREATE DATABASE IF NOT EXISTS football_db
+spark.sql(""" CREATE DATABASE IF NOT EXISTS football_db; """)
 
 # COMMAND ----------
 
@@ -1122,7 +1113,7 @@ def plot_premier_league_table(df):
 
         df = spark.sql("""
 
-            SELECT  ranking
+            SELECT  DISTINCT ranking
                    , team
                    , matches_played
                    , wins
@@ -1207,7 +1198,7 @@ def plot_teams_with_most_wins_table(df):
         # Use the Premier League temp view 
         df = spark.sql("""
 
-            SELECT * FROM premier_league_tbl_sql    
+            SELECT DISTINCT * FROM premier_league_tbl_sql    
 
         """)
 
@@ -1290,7 +1281,7 @@ def plot_teams_with_most_goals_scored_table(df):
         # Use the Premier League temp view 
         df = spark.sql("""
 
-            SELECT * FROM premier_league_tbl_sql    
+            SELECT DISTINCT * FROM premier_league_tbl_sql    
 
         """)
 
