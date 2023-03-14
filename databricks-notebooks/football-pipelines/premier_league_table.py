@@ -394,6 +394,68 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 
 # COMMAND ----------
 
+def create_bronze_audit_log_tbl(spark: SparkSession, bronze_table_path: str) -> None:
+    # Read delta file into Delta table instance
+    bronze_delta_df = DeltaTable.forPath(spark, bronze_table)
+
+    bronze_audit_log_df = bronze_delta_df.history() 
+    
+    # Explode the operationMetrics column
+    exploded_bronze_audit_log_df = bronze_audit_log_df.select(
+                    bronze_audit_log_df.version,
+                    bronze_audit_log_df.timestamp,
+                    bronze_audit_log_df.userId,
+                    bronze_audit_log_df.userName,
+                    bronze_audit_log_df.operation,
+                    explode(bronze_audit_log_df.operationMetrics)
+                    )
+    
+    # Select relevant columns and cast value column to integer 
+    final_bronze_audit_log_df = exploded_bronze_audit_log_df.select(
+                    bronze_audit_log_df.version,
+                    bronze_audit_log_df.timestamp,
+                    bronze_audit_log_df.userId,
+                    bronze_audit_log_df.userName,
+                    exploded_bronze_audit_log_df.operation,
+                    exploded_bronze_audit_log_df.key,
+                    exploded_bronze_audit_log_df.value.cast('int')
+                    )
+    
+    
+    # Create pivot table to convert audit log records to fields
+    pivot_bronze_audit_log_df = final_bronze_audit_log_df.groupBy("operation", "version", "timestamp", "userId", "userName").pivot("key").sum("value")
+    pivot_bronze_audit_log_df.createOrReplaceTempView("load_last_operation_to_bronze_audit_tbl")
+    
+    # Create audit log table for bronze_tbl
+    spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.bronze_tbl_audit_log (
+                    operation STRING,
+                    version STRING,
+                    timestamp TIMESTAMP,
+                    userID DOUBLE,
+                    userName STRING,
+                    numFiles INT,
+                    numOutputRows INT,
+                    numOutputBytes INT                 
+                    )
+    ; """)
+
+    # Log operations history of last streaming query to audit log 
+    spark.sql("""  INSERT INTO football_db.bronze_tbl_audit_log 
+                        SELECT * FROM load_last_operation_to_bronze_audit_tbl;
+                    """)
+    
+    print("Audit log table for bronze delta table successfully created")
+    display(pivot_bronze_audit_log_df)
+    
+
+create_bronze_audit_log_tbl(spark, bronze_table)
+
+# COMMAND ----------
+
+dbutils.notebook.exit("Stop at the bronze audit log table.")
+
+# COMMAND ----------
+
 from delta.tables import * 
 
 
