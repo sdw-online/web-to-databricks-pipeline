@@ -11,6 +11,14 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks1'"
 		},
+		"databricks_compute_linked_service_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'databricks_compute_linked_service'"
+		},
+		"new_files_land_in_src_blob_container_trigger_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/18871de8-40a6-4280-ad60-124f576ceac8/resourceGroups/sdw_resource_group_01/providers/Microsoft.Storage/storageAccounts/sdwstorageaccount0001"
+		},
 		"containerUri": {
 			"type": "string",
 			"metadata": "URI to storage account containing linked ARM templates"
@@ -40,6 +48,12 @@
 					},
 					"AzureDatabricks1_accessToken": {
 						"value": "[parameters('AzureDatabricks1_accessToken')]"
+					},
+					"databricks_compute_linked_service_accessToken": {
+						"value": "[parameters('databricks_compute_linked_service_accessToken')]"
+					},
+					"new_files_land_in_src_blob_container_trigger_properties_typeProperties_scope": {
+						"value": "[parameters('new_files_land_in_src_blob_container_trigger_properties_typeProperties_scope')]"
 					}
 				}
 			},
