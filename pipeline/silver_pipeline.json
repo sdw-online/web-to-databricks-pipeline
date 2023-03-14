@@ -1,0 +1,28 @@
+{
+	"name": "silver_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "silver_notebook",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Repos/stephenoilesanmi@gmail.com/web-to-databricks-pipeline/databricks-notebooks/football-pipelines/premier_league_table/2_silver_zone"
+				},
+				"linkedServiceName": {
+					"referenceName": "databricks_compute_linked_service",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": []
+	}
+}
