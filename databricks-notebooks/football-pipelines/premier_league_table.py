@@ -303,73 +303,59 @@ autoloader_config = {
 
 # COMMAND ----------
 
+# Read cloud-sourced CSV data into bronze streaming dataframe
+
+print('Reading CSV data into bronze streaming dataframe...')
+src_query = (spark.readStream
+             .format("cloudFiles")
+             .option("cloudFiles.format", "csv")
+             .option("cloudFiles.clientId", client_id)
+             .option("cloudFiles.clientSecret", client_secret)
+             .option("cloudFiles.tenantId", tenant_id)
+             .option("cloudFiles.subscriptionId", subscription_id)
+             .option("cloudFiles.connectionString", connection_string)
+             .option("cloudFiles.resourceGroup", resource_group)
+             .option("cloudFiles.useNotifications", False)
+             .option("cloudFiles.validateOptions", False)
+             .option("header", True)
+             .schema(league_table_schema)
+             .load(football_data_path_for_src_csv_files)
+     )
+print('Completed')
+print('---------------')
+
+# COMMAND ----------
+
 from pyspark.sql.functions import concat, lit, lower, regexp_replace
+print('Adding unique IDs to records...')
+    
+# Add unique IDs to each record 
+src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
+print('Completed')
+print('---------------')
 
-def process_data_in_bronze_zone(
-        client_id: str,
-        client_secret: str,
-        tenant_id: str,
-        subscription_id: str,
-        connection_string: str,
-        resource_group: str,
-        source_data_path: str,
-        bronze_checkpoint: str
-        ) -> None:
-    
-    # Read cloud-sourced CSV data into bronze streaming dataframe
-    
-    print('Reading CSV data into bronze streaming dataframe...')
-    src_query = (spark.readStream
-                 .format("cloudFiles")
-                 .option("cloudFiles.format", "csv")
-                 .option("cloudFiles.clientId", client_id)
-                 .option("cloudFiles.clientSecret", client_secret)
-                 .option("cloudFiles.tenantId", tenant_id)
-                 .option("cloudFiles.subscriptionId", subscription_id)
-                 .option("cloudFiles.connectionString", connection_string)
-                 .option("cloudFiles.resourceGroup", resource_group)
-                 .option("cloudFiles.useNotifications", False)
-                 .option("cloudFiles.validateOptions", False)
-                 .option("header", True)
-                 .schema(league_table_schema)
-                 .load(football_data_path_for_src_csv_files)
-         )
-    print('Completed')
-    print('---------------')
-    
-    
-    print('Adding unique IDs to records...')
-    
-    # Add unique IDs to each record 
-    src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
-    print('Completed')
-    print('---------------')
-    
-    
-    # Write bronze streaming content into Hive metatable
-    
-    print('Writing bronze streaming data into Hive table...')
-    bronze_streaming_query = (src_query
-                          .writeStream
-                          .format("delta")
-                          .option("checkpointLocation", bronze_checkpoint)
-                          .option("enforceSchema", True)
-                          .option("mergeSchema", False)
-                          .option("ignoreChanges", False)
-                          .queryName("BRONZE_QUERY_LEAGUE_STANDINGS_01")
-                          .outputMode("append")
-                          .trigger(once=True)
-                          .toTable("football_db.bronze_tbl")
-                         )
-    
+# COMMAND ----------
 
-process_data_in_bronze_zone(client_id=client_id, client_secret=client_secret, tenant_id=tenant_id,
-        subscription_id=subscription_id,
-        connection_string=connection_string,
-        resource_group=resource_group,
-        source_data_path=football_data_path_for_src_csv_files,
-        bronze_checkpoint=bronze_checkpoint)
-    
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Write data from source query into bronze delta table
+
+# COMMAND ----------
+
+# Write bronze streaming content into Hive metatable
+
+bronze_streaming_query = (src_query
+                      .writeStream
+                      .format("delta")
+                      .option("checkpointLocation", bronze_checkpoint)
+                      .option("enforceSchema", True)
+                      .option("mergeSchema", False)
+                      .option("ignoreChanges", False)
+                      .queryName("BRONZE_QUERY_LEAGUE_STANDINGS_01")
+                      .outputMode("append")
+                      .trigger(once=True)
+                      .toTable("football_db.bronze_tbl")
+                     )
 
 # COMMAND ----------
 
@@ -442,6 +428,7 @@ def render_bronze_query_metrics(bronze_streaming_query: DataStreamWriter):
         print('')
         print(f'Source:                                  "{bronze_sources}"  ')
         print(f'Sink:                                    "{bronze_sink}" ')
+        
     else:
         print('No changes appeared in the source directory')
 
@@ -449,7 +436,8 @@ render_bronze_query_metrics(bronze_streaming_query)
 
 # COMMAND ----------
 
-from pyspark.sql.functions import explode 
+from pyspark.sql.functions import explode, array 
+from delta import *
 
 def create_bronze_audit_log_tbl(bronze_table_path: str) -> None:
     # Read delta file into Delta table instance
@@ -458,30 +446,70 @@ def create_bronze_audit_log_tbl(bronze_table_path: str) -> None:
     # Read the standard audit log into a dataframe instance
     bronze_audit_log_df   = bronze_delta_df.history() 
     
-    # Explode the operationMetrics column
-    exploded_bronze_audit_log_df = bronze_audit_log_df.select(
-                    bronze_audit_log_df.version,
-                    bronze_audit_log_df.timestamp,
-                    bronze_audit_log_df.userId,
-                    bronze_audit_log_df.userName,
-                    bronze_audit_log_df.operation,
-                    explode(bronze_audit_log_df.operationMetrics)
-                    )
-    
-    # Select relevant columns and cast value column to integer 
-    final_bronze_audit_log_df = exploded_bronze_audit_log_df.select(
-                    bronze_audit_log_df.version,
-                    bronze_audit_log_df.timestamp,
-                    bronze_audit_log_df.userId,
-                    bronze_audit_log_df.userName,
-                    exploded_bronze_audit_log_df.operation,
-                    exploded_bronze_audit_log_df.key,
-                    exploded_bronze_audit_log_df.value.cast('int')
-                    )
-    
+    # Explode the operationMetrics and operationParameters columns
+    metrics_df = bronze_audit_log_df.select(
+        bronze_audit_log_df.version,
+        bronze_audit_log_df.timestamp,
+        bronze_audit_log_df.userId,
+        bronze_audit_log_df.userName,
+        bronze_audit_log_df.operation,
+        explode(bronze_audit_log_df.operationMetrics).alias("key_value")
+    ).select(
+        bronze_audit_log_df.version,
+        bronze_audit_log_df.timestamp,
+        bronze_audit_log_df.userId,
+        bronze_audit_log_df.userName,
+        bronze_audit_log_df.operation,
+        "key_value.key",
+        "key_value.value"
+    ).toDF("version", "timestamp", "userId", "userName", "operation", "metrics_key", "metrics_value")
+
+    params_df = bronze_audit_log_df.select(
+        bronze_audit_log_df.version,
+        bronze_audit_log_df.timestamp,
+        bronze_audit_log_df.userId,
+        bronze_audit_log_df.userName,
+        bronze_audit_log_df.operation,
+        explode(bronze_audit_log_df.operationParameters).alias("key_value")
+    ).select(
+        bronze_audit_log_df.version,
+        bronze_audit_log_df.timestamp,
+        bronze_audit_log_df.userId,
+        bronze_audit_log_df.userName,
+        bronze_audit_log_df.operation,
+        concat(lit("params_"), "key_value.key").alias("params_key"),
+        "key_value.value"
+    )
+
+    combined_df = metrics_df.unionAll(params_df).select(
+        bronze_audit_log_df.version,
+        bronze_audit_log_df.timestamp,
+        bronze_audit_log_df.userId,
+        bronze_audit_log_df.userName,
+        bronze_audit_log_df.operation,
+        "metrics_key",
+        "metrics_value",
+        "params_key",
+        "value.cast('int')",
+        bronze_audit_log_df.query,
+        bronze_audit_log_df.numInputRows.cast('int'),
+        bronze_audit_log_df.numFiles,
+        bronze_audit_log_df.numOutputRows.cast('int'),
+        bronze_audit_log_df.numOutputBytes.cast('int'),
+        bronze_audit_log_df.source,
+        bronze_audit_log_df.mode,
+        bronze_audit_log_df.partitionBy,
+        bronze_audit_log_df.path
+    )
     
     # Create pivot table to convert audit log records to fields
-    pivot_bronze_audit_log_df = final_bronze_audit_log_df.groupBy("operation", "version", "timestamp", "userId", "userName").pivot("key").sum("value")
+    pivot_bronze_audit_log_df = (combined_df
+        .groupBy("operation", "version", "timestamp", "userId", "userName", "query", 
+                 "numInputRows", "numFiles", "numOutputRows", "numOutputBytes", 
+                 "source", "mode", "partitionBy", "path")
+        .pivot("key")
+        .sum("value")
+    )
     pivot_bronze_audit_log_df.createOrReplaceTempView("load_last_operation_to_bronze_audit_tbl")
     pivot_bronze_audit_log_df = pivot_bronze_audit_log_df.orderBy("version", ascending=False)
     
@@ -492,9 +520,18 @@ def create_bronze_audit_log_tbl(bronze_table_path: str) -> None:
                     timestamp TIMESTAMP,
                     userID DOUBLE,
                     userName STRING,
+                    query STRING,
+                    numInputRows INT
                     numFiles INT,
                     numOutputRows INT,
-                    numOutputBytes INT                 
+                    numOutputBytes INT,
+                    numFiles INT,
+                    numOutputRows INT,
+                    numOutputBytes INT,
+                    source STRING,
+                    mode STRING,
+                    partitionBy STRING,
+                    path STRING                 
                     )
     ; """)
 
@@ -529,7 +566,8 @@ dbutils.notebook.exit("Stop at the bronze audit log table.")
 
 # COMMAND ----------
 
-# MAGIC %sql 
+# MAGIC %sql
+# MAGIC 
 # MAGIC 
 # MAGIC DESCRIBE HISTORY football_db.bronze_tbl
 # MAGIC 
