@@ -23,6 +23,9 @@
 				}
 			}
 		],
+		"folder": {
+			"name": "football_pipelines"
+		},
 		"annotations": []
 	}
 }
