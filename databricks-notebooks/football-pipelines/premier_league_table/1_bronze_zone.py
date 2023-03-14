@@ -505,7 +505,7 @@ create_bronze_audit_log_tbl(bronze_table)
 
 # COMMAND ----------
 
-dbutils.notebook.exit("Stop at the bronze audit log table.")
+# dbutils.notebook.exit("Stop at the bronze audit log table.")
 
 # COMMAND ----------
 
@@ -526,3 +526,10 @@ dbutils.notebook.exit("Stop at the bronze audit log table.")
 # MAGIC %sql
 # MAGIC 
 # MAGIC SELECT * FROM football_db.bronze_tbl
+
+# COMMAND ----------
+
+# MAGIC 
+# MAGIC %md
+# MAGIC 
+# MAGIC # END OF NOTEBOOK

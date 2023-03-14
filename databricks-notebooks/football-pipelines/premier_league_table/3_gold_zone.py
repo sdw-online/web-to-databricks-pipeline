@@ -110,96 +110,6 @@ teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goa
 
 # COMMAND ----------
 
-client_id                      =    dbutils.secrets.get(scope="azure-02", key="client_id")
-client_secret                  =    dbutils.secrets.get(scope="azure-02", key="client_secret")
-tenant_id                      =    dbutils.secrets.get(scope="azure-02", key="tenant_id")
-
-
-subscription_id                =    dbutils.secrets.get(scope="azure-02", key="subscription_id")
-connection_string              =    dbutils.secrets.get(scope="azure-02", key="connection_string")
-resource_group                 =    dbutils.secrets.get(scope="azure-02", key="resource_group")
-
-queue_connection_string       = dbutils.secrets.get(scope="azure-02", key="queue_service_sas_url")
-
-schema_location                =    f"{mount_point}/src/_schema/prem_league_schema.csv"
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC #### Clear objects for this session (only if you're restarting query operations)
-
-# COMMAND ----------
-
-# Delete objects for this session (checkpoint locations, tables etc)
-
-
-# DELETE_SESSION_OBJECTS = True
-DELETE_SESSION_OBJECTS = False
-
-
-def drop_session_objects() -> None:
-    if DELETE_SESSION_OBJECTS:
-        try:
-
-            # Drop directory
-            dbutils.fs.rm(bronze_checkpoint, True)
-            dbutils.fs.rm(silver_checkpoint, True)
-            dbutils.fs.rm(f"{football_data_path_for_tgt_delta_files}", recurse=True)
-            print(">>> 1. Deleted checkpoint locations successfully ")
-
-
-            # Drop Hive tables
-
-            # A. Bronze tables
-            spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl; """)
-            print(">>> 2. Deleted BRONZE TABLE successfully")
-
-            # B. Silver tables
-            spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_1; """)
-            print(">>> 3. Deleted SILVER TABLE 1 successfully")
-
-
-            spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_2; """)
-            print(">>> 4. Deleted SILVER TABLE 2 successfully")
-
-            # C. Gold tables
-            spark.sql(""" DROP TABLE IF EXISTS football_db.gold_tbl; """)
-            print(">>> 5. Deleted GOLD TABLE successfully")
-
-
-            spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl_audit_log; """)
-            print(">>> 6. Deleted audit log for BRONZE TABLE successfully")
-
-
-            spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_audit_log; """)
-            print(">>> 7. Deleted audit log for SILVER TABLE successfully")
-
-
-
-
-
-            print('')
-            print(">>>  Deleted all session objects successfully ")
-            print("")
-            print("")
-            print("--------------------")
-        except Exception as e:
-            print(e)
-            print("")
-            print("")
-            print("--------------------")
-
-    else:
-        print("No session objects deleted.")
-        print("")
-        print("")
-        print("--------------------")
-        
-drop_session_objects()
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC 
 # MAGIC 
@@ -251,10 +161,6 @@ gold_tbl_df.createOrReplaceTempView("gold_df_sql")
 
 from pyspark import StorageLevel
 gold_tbl_df.persist(StorageLevel.MEMORY_ONLY)
-
-# COMMAND ----------
-
-display(gold_tbl_df)
 
 # COMMAND ----------
 
@@ -617,3 +523,10 @@ plot_teams_with_most_goals_scored_table(gold_tbl_df)
 
 # premier_league_df.orderBy("points", ascending=True)#.first()
 display(premier_league_df.orderBy(["points", "goal_difference"], ascending=False))
+
+# COMMAND ----------
+
+# MAGIC 
+# MAGIC %md
+# MAGIC 
+# MAGIC # END OF NOTEBOOK

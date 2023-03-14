@@ -374,6 +374,12 @@ silver_streaming_df_1 =  (silver_streaming_df_1.transform(rename_columns)
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC 
+# MAGIC SELECT * FROM football_db.silver_tbl_1
+
+# COMMAND ----------
+
 def create_1st_stage_silver_tbl():
     silver_tbl_stage_1 = 'football_db.silver_tbl_1'
     spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl_1;  """)
@@ -383,7 +389,6 @@ def create_1st_stage_silver_tbl():
         print("")
         print("")
         print("--------------------")
-        display(spark.sql(f""" SELECT * FROM {silver_tbl_stage_1} ORDER BY ranking;   """))
         
     else:
         print(f"The '{silver_tbl_stage_1}' table doesn't exist in the Spark catalogue... ")
@@ -423,10 +428,6 @@ silver_streaming_df_2 = (silver_streaming_df_1
 # COMMAND ----------
 
 dbutils.notebook.exit("stop")
-
-# COMMAND ----------
-
-
 
 # COMMAND ----------
 
@@ -624,3 +625,10 @@ def create_silver_audit_log_tbl(silver_table_path: str) -> None:
 
 create_silver_audit_log_tbl(silver_table)
 
+
+# COMMAND ----------
+
+# MAGIC 
+# MAGIC %md
+# MAGIC 
+# MAGIC # END OF NOTEBOOK
