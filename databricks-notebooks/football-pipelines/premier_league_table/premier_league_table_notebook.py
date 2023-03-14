@@ -108,8 +108,6 @@ premier_league_table_gold                  =   gold_table + 'premier_league_tabl
 teams_with_most_wins_table_gold            =   gold_table + 'teams_with_most_wins/delta_file'
 teams_with_most_goals_scored_table_gold    =   gold_table + 'teams_with_most_goals_scored/delta_file'
 
-
-
 # COMMAND ----------
 
 client_id                      =    dbutils.secrets.get(scope="azure-02", key="client_id")
@@ -124,33 +122,6 @@ resource_group                 =    dbutils.secrets.get(scope="azure-02", key="r
 queue_connection_string       = dbutils.secrets.get(scope="azure-02", key="queue_service_sas_url")
 
 schema_location                =    f"{mount_point}/src/_schema/prem_league_schema.csv"
-# print(schema_location)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC #### Configure Autoloader file notifications 
-
-# COMMAND ----------
-
-autoloader_config = {
-"cloudFiles.format": "csv",
-"cloudFiles.clientId": client_id,
-"cloudFiles.clientSecret": client_secret,
-"cloudFiles.tenantId": tenant_id,
-"cloudFiles.subscriptionId": subscription_id,
-"cloudFiles.connectionString": connection_string,
-"clientFiles.resourceGroup": resource_group,
-"cloudFiles.schemaLocation": schema_location,
-"clientFiles.useNotifications": "true",
-"inferSchema": False,
-"header": True
-}
-
-# COMMAND ----------
-
-# spark.conf.set("fs.azure.account.key.landingspot.blob.core.windows.net", )
 
 # COMMAND ----------
 
@@ -167,53 +138,65 @@ autoloader_config = {
 DELETE_SESSION_OBJECTS = False
 
 
-if DELETE_SESSION_OBJECTS:
-    try:
-        dbutils.fs.rm(bronze_checkpoint, True)
-        dbutils.fs.rm(silver_checkpoint, True)
+def drop_session_objects() -> None:
+    if DELETE_SESSION_OBJECTS:
+        try:
 
-        # Drop directory
-        dbutils.fs.rm(f"{football_data_path_for_tgt_delta_files}", recurse=True)
-        print(">>> 1. Deleted checkpoint locations successfully ")
+            # Drop directory
+            dbutils.fs.rm(bronze_checkpoint, True)
+            dbutils.fs.rm(silver_checkpoint, True)
+            dbutils.fs.rm(f"{football_data_path_for_tgt_delta_files}", recurse=True)
+            print(">>> 1. Deleted checkpoint locations successfully ")
+
+
+            # Drop Hive tables
+
+            # A. Bronze tables
+            spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl; """)
+            print(">>> 2. Deleted BRONZE TABLE successfully")
+
+            # B. Silver tables
+            spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_1; """)
+            print(">>> 3. Deleted SILVER TABLE 1 successfully")
+
+
+            spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_2; """)
+            print(">>> 4. Deleted SILVER TABLE 2 successfully")
+
+            # C. Gold tables
+            spark.sql(""" DROP TABLE IF EXISTS football_db.gold_tbl; """)
+            print(">>> 5. Deleted GOLD TABLE successfully")
+
+
+            spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl_audit_log; """)
+            print(">>> 6. Deleted audit log for BRONZE TABLE successfully")
+
+
+            spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_audit_log; """)
+            print(">>> 7. Deleted audit log for SILVER TABLE successfully")
+
+
+
+
+
+            print('')
+            print(">>>  Deleted all session objects successfully ")
+            print("")
+            print("")
+            print("--------------------")
+        except Exception as e:
+            print(e)
+            print("")
+            print("")
+            print("--------------------")
+
+    else:
+        print("No session objects deleted.")
+        print("")
+        print("")
+        print("--------------------")
         
-        
-        # Drop Hive tables
-        
-        # A. Bronze tables
-        spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl; """)
-        print(">>> 2. Deleted BRONZE TABLE successfully")
-        
-        # B. Silver tables
-        spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_1; """)
-        print(">>> 3. Deleted SILVER TABLE 1 successfully")
-        
-        
-        spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_2; """)
-        print(">>> 4. Deleted SILVER TABLE 2 successfully")
-        
-        # C. Gold tables
-        spark.sql(""" DROP TABLE IF EXISTS football_db.gold_tbl; """)
-        print(">>> 5. Deleted GOLD TABLE successfully")
-        
-        
-        spark.sql(""" DROP TABLE IF EXISTS football_db.bronze_tbl_audit_log; """)
-        print(">>> 6. Deleted audit log for BRONZE TABLE successfully")
-        
-        
-        spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_audit_log; """)
-        print(">>> 7. Deleted audit log for SILVER TABLE successfully")
-        
-               
-        
-        
-        
-        print('')
-        print(">>>  Deleted all session objects successfully ")
-    except Exception as e:
-        print(e)
-    
-else:
-    print("No session objects deleted.")
+drop_session_objects()
 
 # COMMAND ----------
 
@@ -281,9 +264,21 @@ league_table_schema = StructType([
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC CREATE DATABASE IF NOT EXISTS football_db
+def create_football_database():
+    db_name = 'football_db'
+    spark.sql(f""" CREATE DATABASE IF NOT EXISTS {db_name}; """)
+    if spark.catalog.databaseExists(db_name):
+        print(f"The '{db_name}' database exists in the Spark catalogue. ")
+        print("")
+        print("")
+        print("--------------------")
+    else:
+        print(f""" ERROR: Database {db_name} does not exist... """)
+        print("")
+        print("")
+        print("--------------------")
+    
+create_football_database()
 
 # COMMAND ----------
 
@@ -293,22 +288,9 @@ league_table_schema = StructType([
 
 # COMMAND ----------
 
-autoloader_config = {
-"cloudFiles.format": "csv",
-"cloudFiles.clientId": client_id,
-"cloudFiles.clientSecret": client_secret,
-"cloudFiles.tenantId": tenant_id,
-"cloudFiles.subscriptionId": subscription_id,
-"cloudFiles.connectionString": connection_string,
-"clientFiles.resourceGroup": resource_group,
-"cloudFiles.schemaLocation": schema_location,
-"clientFiles.useNotifications": False,
-"inferSchema": False,
-"header": True
-}
+# Read cloud-sourced CSV data into bronze streaming dataframe
 
-# COMMAND ----------
-
+print('Reading CSV data into bronze streaming dataframe...')
 src_query = (spark.readStream
              .format("cloudFiles")
              .option("cloudFiles.format", "csv")
@@ -324,43 +306,45 @@ src_query = (spark.readStream
              .schema(league_table_schema)
              .load(football_data_path_for_src_csv_files)
      )
-
-# COMMAND ----------
-
-# display(src_query)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC ### Add unique ID column 
+print('Completed')
+print("")
+print("")
+print("--------------------")
 
 # COMMAND ----------
 
 from pyspark.sql.functions import concat, lit, lower, regexp_replace
-
+print('Adding unique IDs to records...')
+    
+# Add unique IDs to each record 
 src_query = src_query.withColumn("team_id", concat(lower(regexp_replace("team", "\s+", "")), lit("_123")))
+print('Completed')
+print("")
+print("")
+print("--------------------")
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Write data from source query into bronze delta table 
+# MAGIC ### Write data from source query into bronze delta table
 
 # COMMAND ----------
 
+# Write bronze streaming content into Hive metatable
+
 bronze_streaming_query = (src_query
-                          .writeStream
-                          .format("delta") 
-                          .option("checkpointLocation", bronze_checkpoint)
-                          .option("enforceSchema", True)
-                          .option("mergeSchema", False)
-                          .option("ignoreChanges", False)
-                          .queryName("BRONZE_QUERY_LEAGUE_STANDINGS_01")
-                          .outputMode("append")
-                          .trigger(once=True)
-                          .toTable("football_db.bronze_tbl") 
-                         )
+                      .writeStream
+                      .format("delta")
+                      .option("checkpointLocation", bronze_checkpoint)
+                      .option("enforceSchema", True)
+                      .option("mergeSchema", False)
+                      .option("ignoreChanges", False)
+                      .queryName("BRONZE_QUERY_LEAGUE_STANDINGS_01")
+                      .outputMode("append")
+                      .trigger(once=True)
+                      .toTable("football_db.bronze_tbl")
+                     )
 
 # COMMAND ----------
 
@@ -381,17 +365,30 @@ dbutils.notebook.exit("Terminating the bronze query")
 # COMMAND ----------
 
 # Convert Hive table into data frame 
-bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
+
+def write_bronze_tbl_to_delta() -> None:
+    print("Creating delta table...")
+    print("")
+    print("")
+    bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 
 
-# Write bronze table data frame to delta table
-(bronze_tbl_df
-     .write
-     .format("delta")
-     .mode("append")
-     .option("mergeSchema", True)
-     .save(bronze_table)
-)
+    # Write bronze table data frame to delta table
+    (bronze_tbl_df
+         .write
+         .format("delta")
+         .mode("append")
+         .option("mergeSchema", True)
+         .option("checkpointLocation", bronze_checkpoint)
+         .save(bronze_table)
+    )
+    print("Successfully created new Delta table.")
+    print("")
+    print("")
+    print("")
+    print("--------------------")
+
+write_bronze_tbl_to_delta()
 
 # COMMAND ----------
 
@@ -403,94 +400,112 @@ bronze_tbl_df = spark.read.table("football_db.bronze_tbl")
 
 # COMMAND ----------
 
-from delta.tables import * 
+from pyspark.sql.streaming import DataStreamWriter
+
+def render_bronze_query_metrics(bronze_streaming_query: DataStreamWriter):
+    if len(bronze_streaming_query.recentProgress) > 0:
+        bronze_query_id                        =    bronze_streaming_query.recentProgress[0]['id']
+        bronze_run_id                          =    bronze_streaming_query.recentProgress[0]['runId']
+        bronze_batch_id                        =    bronze_streaming_query.recentProgress[0]['batchId']
+        bronze_query_name                      =    bronze_streaming_query.recentProgress[0]['name']
+        bronze_query_execution_timestamp       =    bronze_streaming_query.recentProgress[0]['timestamp']
+        bronze_sources                         =    bronze_streaming_query.recentProgress[0]['sources'][0]['description']
+        bronze_sink                            =    bronze_streaming_query.recentProgress[0]['sink']['description']
 
 
-# Read delta file into Delta table instance
-bronze_delta_df = DeltaTable.forPath(spark, bronze_table)
+        print(f'=================== DATA PROFILING METRICS: BRONZE ===================')
+        print(f'======================================================================')
+        print(f'')
+        print(f'Query name:                              "{bronze_query_name}"')
+        print(f'Query ID:                                "{bronze_query_id}"')
+        print(f'Run ID:                                  "{bronze_run_id}" ')
+        print(f'Batch ID:                                "{bronze_batch_id}" ')
+        print(f'Execution Timestamp:                     "{bronze_query_execution_timestamp}" ')
 
-bronze_tbl_audit_log_df = bronze_delta_df.history() 
-display(bronze_tbl_audit_log_df)
+        print('')
+        print(f'Source:                                  "{bronze_sources}"  ')
+        print(f'Sink:                                    "{bronze_sink}" ')
+        print("")
+        print("")
+        print("")
+        print("--------------------")
+        
+    else:
+        print('No changes appeared in the source directory')
+        print("")
+        print("")
+        print("")
+        print("--------------------")
 
-# COMMAND ----------
-
-from pyspark.sql.functions import explode
-
-
-# Explode the required columns 
-explode_bronze_tbl_audit_log_df_1 = bronze_tbl_audit_log_df.select(bronze_tbl_audit_log_df.version,
-                                                                   bronze_tbl_audit_log_df.timestamp,
-                                                                   bronze_tbl_audit_log_df.userId,
-                                                                   bronze_tbl_audit_log_df.userName,
-                                                                   bronze_tbl_audit_log_df.operation, 
-                                                                   explode(bronze_tbl_audit_log_df.operationMetrics)
-                                                                )
-
-explode_bronze_tbl_audit_log_df_2 = explode_bronze_tbl_audit_log_df_1.select(bronze_tbl_audit_log_df.version,
-                                                                             bronze_tbl_audit_log_df.timestamp,
-                                                                             bronze_tbl_audit_log_df.userId,
-                                                                             bronze_tbl_audit_log_df.userName,
-                                                                             explode_bronze_tbl_audit_log_df_1.operation,
-                                                                             explode_bronze_tbl_audit_log_df_1.key,
-                                                                             explode_bronze_tbl_audit_log_df_1.value.cast('int'))
-
-display(explode_bronze_tbl_audit_log_df_2)
-
-# COMMAND ----------
-
-# Create a pivot table to convert the audit log records to fields
-final_audit_log_bronze_df = explode_bronze_tbl_audit_log_df_2.groupBy("operation", "version", "timestamp", "userId", "userName").pivot("key").sum("value")
-final_audit_log_bronze_df.createOrReplaceTempView("load_last_operation_to_bronze_audit_tbl")
-display(final_audit_log_bronze_df)
-
-# COMMAND ----------
-
-# Create audit log table for bronze_tbl
-spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.bronze_tbl_audit_log (
-                operation STRING,
-                version STRING,
-                timestamp TIMESTAMP,
-                userID DOUBLE,
-                userName STRING,
-                numFiles INT,
-                numOutputRows INT,
-                numOutputBytes INT                 
-                )
-; """)
-
-# Log operations history of last streaming query to audit log 
-spark.sql("""  INSERT INTO football_db.bronze_tbl_audit_log 
-                    SELECT * FROM load_last_operation_to_bronze_audit_tbl;
-                    
-                """)
+render_bronze_query_metrics(bronze_streaming_query)
 
 # COMMAND ----------
 
-# MAGIC %sql 
-# MAGIC 
-# MAGIC SELECT * FROM football_db.bronze_tbl_audit_log;
-# MAGIC -- drop table football_db.bronze_tbl_audit_log
+from pyspark.sql.functions import explode 
+from delta import *
 
-# COMMAND ----------
-
-if len(bronze_streaming_query.recentProgress) > 0:
-    no_of_incoming_rows = bronze_streaming_query.recentProgress[0]['numInputRows']
-    query_name = bronze_streaming_query.recentProgress[0]['name']
-    query_execution_timestamp = bronze_streaming_query.recentProgress[0]['timestamp']
-    bronze_sources = bronze_streaming_query.recentProgress[0]['sources'][0]['description']
-    bronze_sink = bronze_streaming_query.recentProgress[0]['sink']['description']
+def create_bronze_audit_log_tbl(bronze_table_path: str) -> None:
+    # Read delta file into Delta table instance
+    bronze_delta_df       = DeltaTable.forPath(spark, bronze_table)
+    
+    # Read the standard audit log into a dataframe instance
+    bronze_audit_log_df   = bronze_delta_df.history() 
+    
+    # Explode the operationMetrics column
+    exploded_bronze_audit_log_df = bronze_audit_log_df.select(
+                    bronze_audit_log_df.version,
+                    bronze_audit_log_df.timestamp,
+                    bronze_audit_log_df.userId,
+                    bronze_audit_log_df.userName,
+                    bronze_audit_log_df.operation,
+                    explode(bronze_audit_log_df.operationMetrics)
+                    )
+    
+    # Select relevant columns and cast value column to integer 
+    final_bronze_audit_log_df = exploded_bronze_audit_log_df.select(
+                    bronze_audit_log_df.version,
+                    bronze_audit_log_df.timestamp,
+                    bronze_audit_log_df.userId,
+                    bronze_audit_log_df.userName,
+                    exploded_bronze_audit_log_df.operation,
+                    exploded_bronze_audit_log_df.key,
+                    exploded_bronze_audit_log_df.value.cast('int')
+                    )
     
     
-    print(f'=================== DATA PROFILING METRICS: BRONZE ===================')
-    print(f'======================================================================')
-    print(f'')
-    print(f'Bronze query name:                       {query_name}')
-    print(f'New rows inserted into bronze table:     {no_of_incoming_rows}')
-    print(f'Source:                                  "{bronze_sources}"  ')
-    print(f'Sink:                                    "{bronze_sink}" ')
-else:
-    print('No changes appeared in the source directory')
+    # Create pivot table to convert audit log records to fields
+    pivot_bronze_audit_log_df = final_bronze_audit_log_df.groupBy("operation", "version", "timestamp", "userId", "userName").pivot("key").sum("value")
+    pivot_bronze_audit_log_df.createOrReplaceTempView("load_last_operation_to_bronze_audit_tbl")
+    pivot_bronze_audit_log_df = pivot_bronze_audit_log_df.orderBy("version", ascending=False)
     
+    # Create audit log table for bronze_tbl
+    spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.bronze_tbl_audit_log (
+                    operation STRING,
+                    version STRING,
+                    timestamp TIMESTAMP,
+                    userID DOUBLE,
+                    userName STRING,
+                    numFiles INT,
+                    numOutputRows INT,
+                    numOutputBytes INT                 
+                    )
+    ; """)
+
+    # Log operations history of last streaming query to audit log 
+    spark.sql("""  INSERT INTO football_db.bronze_tbl_audit_log 
+                        SELECT * FROM load_last_operation_to_bronze_audit_tbl;
+                    """)
+    
+    # Display the audit log  
+    print("Audit log table for bronze delta table successfully created")
+    display(pivot_bronze_audit_log_df)
+    
+
+create_bronze_audit_log_tbl(bronze_table)
+
+# COMMAND ----------
+
+dbutils.notebook.exit("Stop at the bronze audit log table.")
 
 # COMMAND ----------
 
@@ -500,7 +515,7 @@ else:
 
 # COMMAND ----------
 
-# MAGIC %sql 
+# MAGIC %sql
 # MAGIC 
 # MAGIC DESCRIBE HISTORY football_db.bronze_tbl
 # MAGIC 
@@ -793,6 +808,7 @@ silver_streaming_df_2 = (silver_streaming_df_1
                           .format("delta")
                           .outputMode("append")
                           .foreachBatch(mergeChangesToDF)
+                          .queryName("SILVER_QUERY_LEAGUE_STANDINGS_01")
                           .option("checkpointLocation", silver_checkpoint)
                           .option("mergeSchema", True)
                           .option("ignoreChanges", False)
@@ -816,22 +832,52 @@ dbutils.notebook.exit("stop")
 
 # COMMAND ----------
 
-if len(silver_streaming_df_2.recentProgress) > 0:
-    no_of_incoming_rows = silver_streaming_df_2.recentProgress[0]['numInputRows']
-    query_execution_timestamp = silver_streaming_df_2.recentProgress[0]['timestamp']
-    silver_sources = silver_streaming_df_2.recentProgress[0]['sources'][0]['description']
-    silver_sink = silver_streaming_df_2.recentProgress[0]['sink']['description']
-    
-    
-    print(f'=================== DATA PROFILING METRICS: SILVER ===================')
-    print(f'======================================================================')
-    print(f'')
-    print(f'New rows inserted into silver table:     {no_of_incoming_rows}')
-    print(f'Source:                                  "{silver_sources}"  ')
-    print(f'Sink:                                    "{silver_sink}" ')
-else:
-    print('No changes appeared in the source directory')
-    
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Display the data profiling metrics for silver zone outputs
+
+# COMMAND ----------
+
+from pyspark.sql.streaming import DataStreamWriter
+
+def render_silver_query_metrics(silver_streaming_query: DataStreamWriter):
+    if len(silver_streaming_query.recentProgress) > 0:
+        silver_query_id = silver_streaming_query.recentProgress[0]['id']
+        silver_run_id = silver_streaming_query.recentProgress[0]['runId']
+        silver_batch_id = silver_streaming_query.recentProgress[0]['batchId']
+        silver_query_name = silver_streaming_query.recentProgress[0]['name']
+        silver_query_execution_timestamp = silver_streaming_query.recentProgress[0]['timestamp']
+        silver_sources = silver_streaming_query.recentProgress[0]['sources'][0]['description']
+        silver_sink = silver_streaming_query.recentProgress[0]['sink']['description']
+
+        
+        
+        print(f'=================== DATA PROFILING METRICS: SILVER ===================')
+        print(f'======================================================================')
+        print(f'')
+        print(f'Query name:                              "{silver_query_name}"')
+        print(f'Query ID:                                "{silver_query_id}"')
+        print(f'Run ID:                                  "{silver_run_id}" ')
+        print(f'Batch ID:                                "{silver_batch_id}" ')
+        print(f'Execution Timestamp:                     "{silver_query_execution_timestamp}" ')
+
+        print('')
+        print(f'Source:                                  "{silver_sources}"  ')
+        print(f'Sink:                                    "{silver_sink}" ')
+        print("")
+        print("")
+        print("")
+        print("--------------------")
+        
+    else:
+        print('No changes appeared in the source directory')
+        print("")
+        print("")
+        print("")
+        print("--------------------")
+
+        
+render_silver_query_metrics(silver_streaming_df_2)
 
 # COMMAND ----------
 
@@ -855,48 +901,29 @@ else:
 
 # COMMAND ----------
 
-spark.sql(""" DROP TABLE IF EXISTS football_db.silver_tbl_2; """)
-
-# COMMAND ----------
-
-# MAGIC %sql 
-# MAGIC 
-# MAGIC SELECT DISTINCT * 
-# MAGIC   FROM football_db.silver_tbl_1
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC   
-# MAGIC CREATE TABLE IF NOT EXISTS football_db.silver_tbl_2 as 
-# MAGIC   SELECT DISTINCT * 
-# MAGIC   FROM football_db.silver_tbl_1
-# MAGIC   ; 
-# MAGIC   
-# MAGIC SELECT * FROM football_db.silver_tbl_2; 
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC ### Display the data profiling metrics for silver zone outputs
-
-# COMMAND ----------
-
-# Convert Hive table into data frame 
-silver_tbl_df = spark.read.table("football_db.silver_tbl_2")
-
-silver_row_count = silver_tbl_df.count()
-silver_column_count = len(silver_tbl_df.columns)
-
-
-
-print(f'=================== DATA PROFILING METRICS: SILVER ===================')
-print(f'======================================================================')
-print(f'')
-print(f'Row count:               {silver_row_count}')
-print(f'Column count:            {silver_column_count}  ')
-# print(f'Sink:                                    "{silver_sink}" ')
+def create_clean_silver_tbl():
+    clean_silver_table = 'football_db.silver_tbl_2'
+    spark.sql(f""" DROP TABLE IF EXISTS {clean_silver_table}; """)
+    if not spark.catalog.tableExists(clean_silver_table):
+        
+        spark.sql(f""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl_2 as 
+                          SELECT DISTINCT * 
+                          FROM football_db.silver_tbl_1
+                          ;  
+""")
+        print(f"Successfully created '{clean_silver_table}' table . ")
+        print("")
+        print("")
+        print("--------------------")
+        display(spark.sql(f""" SELECT * FROM {clean_silver_table} ORDER BY ranking;   """))
+        
+    else:
+        print(f"The '{clean_silver_table}' table still exists in the Spark catalogue... ")
+        print("")
+        print("")
+        print("--------------------")
+    
+create_clean_silver_tbl()
 
 # COMMAND ----------
 
@@ -906,14 +933,28 @@ print(f'Column count:            {silver_column_count}  ')
 
 # COMMAND ----------
 
-# Write silver table data frame to delta table
-(silver_tbl_df
-     .write
-     .format("delta")
-     .mode("append")
-     .option("mergeSchema", True)
-     .save(silver_table)
-)
+def write_silver_tbl_to_delta() -> None:
+
+    # Convert Hive table into data frame 
+    silver_tbl_df = spark.read.table("football_db.silver_tbl_2")
+    
+    # Write silver table data frame to delta table
+    (silver_tbl_df
+         .write
+         .format("delta")
+         .mode("append")
+         .option("mergeSchema", True)
+         .option("checkpointLocation", silver_checkpoint)
+         .save(silver_table)
+    )
+    print("Successfully created new Delta table.")
+    print("")
+    print("")
+    print("")
+    print("--------------------")
+
+write_silver_tbl_to_delta()
+
 
 # COMMAND ----------
 
@@ -923,49 +964,47 @@ print(f'Column count:            {silver_column_count}  ')
 
 # COMMAND ----------
 
+from pyspark.sql.functions import explode 
+from delta import *
 
-# Read delta file into Delta table instance
-silver_delta_df = DeltaTable.forPath(spark, silver_table)
+def create_silver_audit_log_tbl(silver_table_path: str) -> None:
+    # Read delta file into Delta table instance
+    silver_delta_df = DeltaTable.forPath(spark, silver_table_path)
 
-silver_tbl_audit_log_df = silver_delta_df.history() 
-display(silver_tbl_audit_log_df)
+    # Read the standard audit log into a dataframe instance
+    silver_tbl_audit_log_df = silver_delta_df.history() 
 
-# COMMAND ----------
+    # Explode the required columns 
+    explode_silver_tbl_audit_log_df_1 = silver_tbl_audit_log_df.select(
+        silver_tbl_audit_log_df.version,
+        silver_tbl_audit_log_df.timestamp,
+        silver_tbl_audit_log_df.userId,
+        silver_tbl_audit_log_df.userName,
+        silver_tbl_audit_log_df.operation, 
+        explode(silver_tbl_audit_log_df.operationMetrics)
+    )
 
-from pyspark.sql.functions import explode
+    explode_silver_tbl_audit_log_df_2 = explode_silver_tbl_audit_log_df_1.select(
+        silver_tbl_audit_log_df.version,
+        silver_tbl_audit_log_df.timestamp,
+        silver_tbl_audit_log_df.userId,
+        silver_tbl_audit_log_df.userName,
+        explode_silver_tbl_audit_log_df_1.operation,
+        explode_silver_tbl_audit_log_df_1.key,
+        explode_silver_tbl_audit_log_df_1.value.cast('int')
+    )
 
 
-# Explode the required columns 
-explode_silver_tbl_audit_log_df_1 = silver_tbl_audit_log_df.select(silver_tbl_audit_log_df.version,
-                                                                   silver_tbl_audit_log_df.timestamp,
-                                                                   silver_tbl_audit_log_df.userId,
-                                                                   silver_tbl_audit_log_df.userName,
-                                                                   silver_tbl_audit_log_df.operation, 
-                                                                   explode(silver_tbl_audit_log_df.operationMetrics)
-                                                                )
+    # Create a pivot table to convert the audit log records to fields
+    final_audit_log_silver_df = explode_silver_tbl_audit_log_df_2.groupBy(
+        "operation", "version", "timestamp", "userId", "userName").pivot("key").sum("value")
+    
+    final_audit_log_silver_df = final_audit_log_silver_df.orderBy("version", ascending=False)
+    final_audit_log_silver_df.createOrReplaceTempView("load_last_operation_to_silver_audit_tbl")
+    display(final_audit_log_silver_df)
 
-explode_silver_tbl_audit_log_df_2 = explode_silver_tbl_audit_log_df_1.select(silver_tbl_audit_log_df.version,
-                                                                             silver_tbl_audit_log_df.timestamp,
-                                                                             silver_tbl_audit_log_df.userId,
-                                                                             silver_tbl_audit_log_df.userName,
-                                                                             explode_silver_tbl_audit_log_df_1.operation,
-                                                                             explode_silver_tbl_audit_log_df_1.key,
-                                                                             explode_silver_tbl_audit_log_df_1.value.cast('int'))
-
-display(explode_silver_tbl_audit_log_df_2)
-
-# COMMAND ----------
-
-# Create a pivot table to convert the audit log records to fields
-final_audit_log_silver_df = explode_silver_tbl_audit_log_df_2.groupBy("operation", "version", "timestamp", "userId", "userName").pivot("key").sum("value")
-final_audit_log_silver_df = final_audit_log_silver_df.orderBy("version", ascending=False)
-final_audit_log_silver_df.createOrReplaceTempView("load_last_operation_to_silver_audit_tbl")
-display(final_audit_log_silver_df)
-
-# COMMAND ----------
-
-# Create audit log table for silver_tbl
-spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl_audit_log (
+    # Create audit log table for silver_tbl
+    spark.sql("""CREATE TABLE IF NOT EXISTS football_db.silver_tbl_audit_log (
                 operation STRING,
                 version STRING,
                 timestamp TIMESTAMP,
@@ -975,20 +1014,18 @@ spark.sql(""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl_audit_log (
                 numOutputRows INT,
                 numOutputBytes INT                 
                 )
-; """)
+    ; """)
 
-# Log operations history of last streaming query to audit log 
-spark.sql("""  INSERT INTO football_db.silver_tbl_audit_log 
-                    SELECT * FROM load_last_operation_to_silver_audit_tbl;
-                    
+    # Log operations history of last streaming query to audit log 
+    spark.sql("""INSERT INTO football_db.silver_tbl_audit_log 
+                SELECT * FROM load_last_operation_to_silver_audit_tbl;
                 """)
 
-# COMMAND ----------
+    # Display the audit log  
+    print("Audit log table for silver delta table successfully created")
 
-# MAGIC %sql 
-# MAGIC 
-# MAGIC SELECT DISTINCT * FROM football_db.silver_tbl_audit_log;
-# MAGIC -- drop table football_db.silver_tbl_audit_log
+create_silver_audit_log_tbl(silver_table)
+
 
 # COMMAND ----------
 
@@ -1122,7 +1159,7 @@ def plot_premier_league_table(df):
 
         df = spark.sql("""
 
-            SELECT  ranking
+            SELECT  DISTINCT ranking
                    , team
                    , matches_played
                    , wins
@@ -1207,7 +1244,7 @@ def plot_teams_with_most_wins_table(df):
         # Use the Premier League temp view 
         df = spark.sql("""
 
-            SELECT * FROM premier_league_tbl_sql    
+            SELECT DISTINCT * FROM premier_league_tbl_sql    
 
         """)
 
@@ -1290,7 +1327,7 @@ def plot_teams_with_most_goals_scored_table(df):
         # Use the Premier League temp view 
         df = spark.sql("""
 
-            SELECT * FROM premier_league_tbl_sql    
+            SELECT DISTINCT * FROM premier_league_tbl_sql    
 
         """)
 
