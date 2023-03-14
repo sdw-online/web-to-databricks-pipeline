@@ -12,7 +12,7 @@
 						"referenceName": "silver_pipeline",
 						"type": "PipelineReference"
 					},
-					"waitOnCompletion": true
+					"waitOnCompletion": false
 				}
 			},
 			{
@@ -22,7 +22,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "gold_pipeline",
+						"referenceName": "bronze_pipeline",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
@@ -38,7 +38,7 @@
 						"referenceName": "silver_pipeline",
 						"type": "PipelineReference"
 					},
-					"waitOnCompletion": false
+					"waitOnCompletion": true
 				}
 			}
 		],
