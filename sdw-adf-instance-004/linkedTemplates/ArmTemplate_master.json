@@ -7,17 +7,9 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "sdw-adf-instance-004"
 		},
-		"azure_blob_storage_linked_service_tgt_001_connectionString": {
+		"AzureDatabricks1_accessToken": {
 			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'azure_blob_storage_linked_service_tgt_001'"
-		},
-		"s3_linked_service_src_001_secretAccessKey": {
-			"type": "secureString",
-			"metadata": "Secure string for 'secretAccessKey' of 's3_linked_service_src_001'"
-		},
-		"s3_linked_service_src_001_properties_typeProperties_accessKeyId": {
-			"type": "string",
-			"defaultValue": "AKIAYKUDG5KBX5CSDZXW"
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks1'"
 		},
 		"containerUri": {
 			"type": "string",
@@ -46,14 +38,8 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
-					"azure_blob_storage_linked_service_tgt_001_connectionString": {
-						"value": "[parameters('azure_blob_storage_linked_service_tgt_001_connectionString')]"
-					},
-					"s3_linked_service_src_001_secretAccessKey": {
-						"value": "[parameters('s3_linked_service_src_001_secretAccessKey')]"
-					},
-					"s3_linked_service_src_001_properties_typeProperties_accessKeyId": {
-						"value": "[parameters('s3_linked_service_src_001_properties_typeProperties_accessKeyId')]"
+					"AzureDatabricks1_accessToken": {
+						"value": "[parameters('AzureDatabricks1_accessToken')]"
 					}
 				}
 			},
