@@ -211,7 +211,7 @@
 								"referenceName": "silver_pipeline",
 								"type": "PipelineReference"
 							},
-							"waitOnCompletion": true,
+							"waitOnCompletion": false,
 							"parameters": {}
 						}
 					},
@@ -222,7 +222,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"pipeline": {
-								"referenceName": "gold_pipeline",
+								"referenceName": "bronze_pipeline",
 								"type": "PipelineReference"
 							},
 							"waitOnCompletion": true,
@@ -239,7 +239,7 @@
 								"referenceName": "silver_pipeline",
 								"type": "PipelineReference"
 							},
-							"waitOnCompletion": false,
+							"waitOnCompletion": true,
 							"parameters": {}
 						}
 					}
@@ -252,7 +252,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/silver_pipeline')]",
-				"[concat(variables('factoryId'), '/pipelines/gold_pipeline')]"
+				"[concat(variables('factoryId'), '/pipelines/bronze_pipeline')]"
 			]
 		},
 		{
