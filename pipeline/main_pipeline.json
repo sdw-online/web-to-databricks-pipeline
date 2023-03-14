@@ -9,10 +9,10 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "bronze_pipeline",
+						"referenceName": "silver_pipeline",
 						"type": "PipelineReference"
 					},
-					"waitOnCompletion": false
+					"waitOnCompletion": true
 				}
 			},
 			{
@@ -22,7 +22,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "bronze_pipeline",
+						"referenceName": "gold_pipeline",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
@@ -38,7 +38,7 @@
 						"referenceName": "silver_pipeline",
 						"type": "PipelineReference"
 					},
-					"waitOnCompletion": true
+					"waitOnCompletion": false
 				}
 			}
 		],
