@@ -18,11 +18,18 @@
 			{
 				"name": "silver_pipeline",
 				"type": "ExecutePipeline",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "bronze_pipeline",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "bronze_pipeline",
+						"referenceName": "silver_pipeline",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
@@ -31,11 +38,18 @@
 			{
 				"name": "gold_pipeline",
 				"type": "ExecutePipeline",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "silver_pipeline",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "silver_pipeline",
+						"referenceName": "gold_pipeline",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
