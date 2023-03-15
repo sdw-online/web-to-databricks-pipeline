@@ -76,6 +76,37 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/new_files_land_in_src_blob_container_trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "main_pipeline",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/football-data/blobs/src/prem-league-raw-data/",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('new_files_land_in_src_blob_container_trigger_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/main_pipeline')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/bronze_pipeline')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -208,21 +239,28 @@
 						"userProperties": [],
 						"typeProperties": {
 							"pipeline": {
-								"referenceName": "silver_pipeline",
+								"referenceName": "bronze_pipeline",
 								"type": "PipelineReference"
 							},
-							"waitOnCompletion": false,
+							"waitOnCompletion": true,
 							"parameters": {}
 						}
 					},
 					{
 						"name": "silver_pipeline",
 						"type": "ExecutePipeline",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "bronze_pipeline",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"userProperties": [],
 						"typeProperties": {
 							"pipeline": {
-								"referenceName": "bronze_pipeline",
+								"referenceName": "silver_pipeline",
 								"type": "PipelineReference"
 							},
 							"waitOnCompletion": true,
@@ -232,11 +270,18 @@
 					{
 						"name": "gold_pipeline",
 						"type": "ExecutePipeline",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "silver_pipeline",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"userProperties": [],
 						"typeProperties": {
 							"pipeline": {
-								"referenceName": "silver_pipeline",
+								"referenceName": "gold_pipeline",
 								"type": "PipelineReference"
 							},
 							"waitOnCompletion": true,
@@ -251,39 +296,9 @@
 				"annotations": []
 			},
 			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/bronze_pipeline')]",
 				"[concat(variables('factoryId'), '/pipelines/silver_pipeline')]",
-				"[concat(variables('factoryId'), '/pipelines/bronze_pipeline')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/new_files_land_in_src_blob_container_trigger')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "main_pipeline",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/football-data/blobs/src/prem-league-raw-data/",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "[parameters('new_files_land_in_src_blob_container_trigger_properties_typeProperties_scope')]",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/main_pipeline')]"
+				"[concat(variables('factoryId'), '/pipelines/gold_pipeline')]"
 			]
 		}
 	]

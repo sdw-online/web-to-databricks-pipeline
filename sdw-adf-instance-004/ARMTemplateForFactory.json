@@ -105,66 +105,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/main_pipeline')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "bronze_pipeline",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "silver_pipeline",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": false,
-							"parameters": {}
-						}
-					},
-					{
-						"name": "silver_pipeline",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "bronze_pipeline",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					},
-					{
-						"name": "gold_pipeline",
-						"type": "ExecutePipeline",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"pipeline": {
-								"referenceName": "silver_pipeline",
-								"type": "PipelineReference"
-							},
-							"waitOnCompletion": true,
-							"parameters": {}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/silver_pipeline')]",
-				"[concat(variables('factoryId'), '/pipelines/bronze_pipeline')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/silver_pipeline')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -284,6 +224,81 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/main_pipeline')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/main_pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "bronze_pipeline",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "bronze_pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "silver_pipeline",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "bronze_pipeline",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "silver_pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "gold_pipeline",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "silver_pipeline",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "gold_pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/bronze_pipeline')]",
+				"[concat(variables('factoryId'), '/pipelines/silver_pipeline')]",
+				"[concat(variables('factoryId'), '/pipelines/gold_pipeline')]"
 			]
 		}
 	]
