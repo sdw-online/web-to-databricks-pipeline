@@ -1,0 +1,25 @@
+{
+	"name": "new_files_land_in_src_blob_container_trigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "main_pipeline",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/football-data/blobs/src/prem-league-raw-data/",
+			"blobPathEndsWith": ".csv",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/18871de8-40a6-4280-ad60-124f576ceac8/resourceGroups/sdw_resource_group_01/providers/Microsoft.Storage/storageAccounts/sdwstorageaccount0001",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}

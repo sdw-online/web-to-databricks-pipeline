@@ -8,6 +8,12 @@
 		"AzureDatabricks1_accessToken": {
 			"value": ""
 		},
+		"databricks_compute_linked_service_accessToken": {
+			"value": ""
+		},
+		"new_files_land_in_src_blob_container_trigger_properties_typeProperties_scope": {
+			"value": "/subscriptions/18871de8-40a6-4280-ad60-124f576ceac8/resourceGroups/sdw_resource_group_01/providers/Microsoft.Storage/storageAccounts/sdwstorageaccount0001"
+		},
 		"containerUri": {
 			"value": ""
 		},

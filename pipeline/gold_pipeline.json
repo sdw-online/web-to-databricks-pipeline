@@ -1,9 +1,9 @@
 {
-	"name": "run_databricks_notebook",
+	"name": "gold_pipeline",
 	"properties": {
 		"activities": [
 			{
-				"name": "execute_etl_job_in_databricks",
+				"name": "gold_notebook",
 				"type": "DatabricksNotebook",
 				"dependsOn": [],
 				"policy": {
@@ -15,14 +15,17 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebookPath": "/Repos/stephenoilesanmi@gmail.com/web-to-databricks-pipeline/databricks-notebooks/football-pipelines/premier_league_table"
+					"notebookPath": "/Repos/stephenoilesanmi@gmail.com/web-to-databricks-pipeline/databricks-notebooks/football-pipelines/premier_league_table/3_gold_zone"
 				},
 				"linkedServiceName": {
-					"referenceName": "AzureDatabricks1",
+					"referenceName": "databricks_compute_linked_service",
 					"type": "LinkedServiceReference"
 				}
 			}
 		],
+		"folder": {
+			"name": "football_pipelines"
+		},
 		"annotations": []
 	}
 }
