@@ -9,6 +9,7 @@ import logging, coloredlogs
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
@@ -90,17 +91,22 @@ s3_client                                           =       boto3.client('s3', a
 
 # Specify the constants for the scraper 
 local_target_path               =   os.path.abspath('scraper/temp_storage/dirty_data')
-# match_dates                     =   ['2023-Mar-08']
-match_dates                     =   ['2022-Sep-01', '2022-Oct-01', '2022-Nov-01', '2022-Dec-01', '2023-Jan-01', '2023-Feb-01', '2023-Mar-01', '2023-Mar-07', '2023-Mar-08']
+match_dates                     =   ['2023-Mar-18']
+# match_dates                     =   ['2022-Sep-01', '2022-Oct-01', '2022-Nov-01', '2022-Dec-01', '2023-Jan-01', '2023-Feb-01', '2023-Mar-01', '2023-Mar-07', '2023-Mar-08', '2023-Mar-12']
 # match_dates                     =   ['2022-Sep-01', '2023-Mar-07']
 table_counter                   =   0
 
 
 # Set up the Selenium Chrome driver 
 options = webdriver.ChromeOptions()
-options.add_argument("--start-maximized")
 options.add_argument("--headless")
-chrome_driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+
+service = Service(executable_path=ChromeDriverManager().install())
+chrome_driver = webdriver.Chrome(service=service, options=options)
+
+
+# Assert the browsert is successfully running in a headless browser 
+assert "--headless" in options.arguments, "WARNING: The Chrome driver is not rendering the script in a headless browser..."
 
 
 
@@ -190,15 +196,9 @@ for match_date in match_dates:
 
 
 
-        # # List the objects in the S3 bucket
-        # s3_objects = s3_client.list_objects_v2(S3_BUCKET, S3_FOLDER)['Contents']
-        # s3_objects_sorted = sorted(s3_objects, key=lambda object: object['LastModified'])
-
-        # root_logger.debug('Objects in S3 sub-folder:')
-        # for object in s3_objects_sorted:
-        #     root_logger.debug(object['Key'], object['LastModified'])
-        #     root_logger.debug('')
-
 
     except Exception as e:
         root_logger.error(e)
+
+
+chrome_driver.quit()

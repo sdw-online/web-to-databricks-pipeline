@@ -14,28 +14,28 @@
         "height": "194 cm",
         "weight": "88 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/1100.png",
+        "photo": "https://media-2.api-sports.io/football/players/1100.png",
         "0": {
             "team": {
                 "id": 50,
                 "name": "Manchester City",
-                "logo": "https://media.api-sports.io/football/teams/50.png"
+                "logo": "https://media-1.api-sports.io/football/teams/50.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-3.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-2.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 25,
-                "lineups": 24,
-                "minutes": 2030,
+                "appearences": 26,
+                "lineups": 25,
+                "minutes": 2120,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.424000",
+                "rating": "7.376923",
                 "captain": false
             },
             "substitutes": {
@@ -44,17 +44,17 @@
                 "bench": 1
             },
             "shots": {
-                "total": 71,
-                "on": 43
+                "total": 74,
+                "on": 44
             },
             "goals": {
-                "total": 27,
+                "total": 28,
                 "conceded": 0,
                 "assists": 5,
                 "saves": null
             },
             "passes": {
-                "total": 347,
+                "total": 357,
                 "key": 20,
                 "accuracy": 10
             },
@@ -64,8 +64,8 @@
                 "interceptions": 2
             },
             "duels": {
-                "total": 152,
-                "won": 57
+                "total": 162,
+                "won": 59
             },
             "dribbles": {
                 "attempts": 20,
@@ -74,7 +74,7 @@
             },
             "fouls": {
                 "drawn": 17,
-                "committed": 23
+                "committed": 27
             },
             "cards": {
                 "yellow": 4,
@@ -84,7 +84,7 @@
             "penalty": {
                 "won": null,
                 "commited": null,
-                "scored": 4,
+                "scored": 5,
                 "missed": 0,
                 "saved": null
             }
@@ -105,28 +105,28 @@
         "height": "188 cm",
         "weight": "86 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/184.png",
+        "photo": "https://media-3.api-sports.io/football/players/184.png",
         "0": {
             "team": {
                 "id": 47,
                 "name": "Tottenham",
-                "logo": "https://media.api-sports.io/football/teams/47.png"
+                "logo": "https://media-1.api-sports.io/football/teams/47.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-1.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 26,
-                "lineups": 26,
-                "minutes": 2328,
+                "appearences": 27,
+                "lineups": 27,
+                "minutes": 2418,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.350000",
+                "rating": "7.381481",
                 "captain": false
             },
             "substitutes": {
@@ -135,17 +135,17 @@
                 "bench": 0
             },
             "shots": {
-                "total": 67,
-                "on": 42
+                "total": 71,
+                "on": 45
             },
             "goals": {
-                "total": 18,
+                "total": 20,
                 "conceded": 0,
                 "assists": 2,
                 "saves": null
             },
             "passes": {
-                "total": 567,
+                "total": 592,
                 "key": 43,
                 "accuracy": 15
             },
@@ -155,17 +155,17 @@
                 "interceptions": 1
             },
             "duels": {
-                "total": 281,
-                "won": 119
+                "total": 288,
+                "won": 122
             },
             "dribbles": {
-                "attempts": 65,
-                "success": 27,
+                "attempts": 66,
+                "success": 28,
                 "past": null
             },
             "fouls": {
                 "drawn": 38,
-                "committed": 22
+                "committed": 24
             },
             "cards": {
                 "yellow": 4,
@@ -175,99 +175,8 @@
             "penalty": {
                 "won": null,
                 "commited": null,
-                "scored": 2,
+                "scored": 3,
                 "missed": 1,
-                "saved": null
-            }
-        }
-    },
-    {
-        "id": 909,
-        "name": "M. Rashford",
-        "firstname": "Marcus",
-        "lastname": "Rashford",
-        "age": 26,
-        "birth": {
-            "date": "1997-10-31",
-            "place": "Manchester",
-            "country": "England"
-        },
-        "nationality": "England",
-        "height": "180 cm",
-        "weight": "70 kg",
-        "injured": false,
-        "photo": "https://media.api-sports.io/football/players/909.png",
-        "0": {
-            "team": {
-                "id": 33,
-                "name": "Manchester United",
-                "logo": "https://media.api-sports.io/football/teams/33.png"
-            },
-            "league": {
-                "id": 39,
-                "name": "Premier League",
-                "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
-                "season": 2022
-            },
-            "games": {
-                "appearences": 25,
-                "lineups": 23,
-                "minutes": 2044,
-                "number": null,
-                "position": "Attacker",
-                "rating": "6.944000",
-                "captain": false
-            },
-            "substitutes": {
-                "in": 2,
-                "out": 10,
-                "bench": 2
-            },
-            "shots": {
-                "total": 51,
-                "on": 32
-            },
-            "goals": {
-                "total": 14,
-                "conceded": 0,
-                "assists": 3,
-                "saves": null
-            },
-            "passes": {
-                "total": 530,
-                "key": 18,
-                "accuracy": 16
-            },
-            "tackles": {
-                "total": 19,
-                "blocks": 3,
-                "interceptions": 5
-            },
-            "duels": {
-                "total": 211,
-                "won": 85
-            },
-            "dribbles": {
-                "attempts": 81,
-                "success": 32,
-                "past": null
-            },
-            "fouls": {
-                "drawn": 17,
-                "committed": 9
-            },
-            "cards": {
-                "yellow": 2,
-                "yellowred": 0,
-                "red": 0
-            },
-            "penalty": {
-                "won": null,
-                "commited": null,
-                "scored": 0,
-                "missed": 0,
                 "saved": null
             }
         }
@@ -287,28 +196,28 @@
         "height": "179 cm",
         "weight": "70 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/19974.png",
+        "photo": "https://media-3.api-sports.io/football/players/19974.png",
         "0": {
             "team": {
                 "id": 55,
                 "name": "Brentford",
-                "logo": "https://media.api-sports.io/football/teams/55.png"
+                "logo": "https://media-3.api-sports.io/football/teams/55.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-2.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 21,
-                "lineups": 21,
-                "minutes": 1882,
+                "appearences": 23,
+                "lineups": 23,
+                "minutes": 2062,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.380952",
+                "rating": "7.356521",
                 "captain": false
             },
             "substitutes": {
@@ -317,17 +226,17 @@
                 "bench": 0
             },
             "shots": {
-                "total": 54,
-                "on": 28
+                "total": 60,
+                "on": 31
             },
             "goals": {
-                "total": 14,
+                "total": 15,
                 "conceded": 0,
                 "assists": 3,
                 "saves": null
             },
             "passes": {
-                "total": 494,
+                "total": 550,
                 "key": 19,
                 "accuracy": 14
             },
@@ -337,17 +246,17 @@
                 "interceptions": 9
             },
             "duels": {
-                "total": 306,
-                "won": 142
+                "total": 335,
+                "won": 154
             },
             "dribbles": {
-                "attempts": 24,
+                "attempts": 26,
                 "success": 6,
                 "past": null
             },
             "fouls": {
-                "drawn": 47,
-                "committed": 37
+                "drawn": 53,
+                "committed": 41
             },
             "cards": {
                 "yellow": 8,
@@ -357,91 +266,91 @@
             "penalty": {
                 "won": null,
                 "commited": null,
-                "scored": 4,
+                "scored": 5,
                 "missed": 0,
                 "saved": null
             }
         }
     },
     {
-        "id": 306,
-        "name": "Mohamed Salah",
-        "firstname": "Mohamed",
-        "lastname": "Salah Hamed Mahrous Ghaly",
-        "age": 31,
+        "id": 909,
+        "name": "M. Rashford",
+        "firstname": "Marcus",
+        "lastname": "Rashford",
+        "age": 26,
         "birth": {
-            "date": "1992-06-15",
-            "place": "Mu\u1e25\u0101fa\u1e93at al Gharbiyya",
-            "country": "Egypt"
+            "date": "1997-10-31",
+            "place": "Manchester",
+            "country": "England"
         },
-        "nationality": "Egypt",
-        "height": "175 cm",
-        "weight": "71 kg",
+        "nationality": "England",
+        "height": "180 cm",
+        "weight": "70 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/306.png",
+        "photo": "https://media-1.api-sports.io/football/players/909.png",
         "0": {
             "team": {
-                "id": 40,
-                "name": "Liverpool",
-                "logo": "https://media.api-sports.io/football/teams/40.png"
+                "id": 33,
+                "name": "Manchester United",
+                "logo": "https://media-3.api-sports.io/football/teams/33.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-2.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 25,
-                "lineups": 25,
-                "minutes": 2229,
+                "appearences": 26,
+                "lineups": 24,
+                "minutes": 2134,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.072000",
+                "rating": "6.919230",
                 "captain": false
             },
             "substitutes": {
-                "in": 0,
-                "out": 4,
-                "bench": 0
+                "in": 2,
+                "out": 10,
+                "bench": 2
             },
             "shots": {
-                "total": 63,
-                "on": 32
+                "total": 52,
+                "on": 33
             },
             "goals": {
-                "total": 11,
+                "total": 14,
                 "conceded": 0,
-                "assists": 7,
+                "assists": 3,
                 "saves": null
             },
             "passes": {
-                "total": 652,
-                "key": 47,
-                "accuracy": 20
+                "total": 552,
+                "key": 18,
+                "accuracy": 16
             },
             "tackles": {
-                "total": 13,
-                "blocks": null,
-                "interceptions": 4
+                "total": 19,
+                "blocks": 4,
+                "interceptions": 5
             },
             "duels": {
-                "total": 209,
-                "won": 70
+                "total": 219,
+                "won": 88
             },
             "dribbles": {
-                "attempts": 75,
-                "success": 28,
+                "attempts": 82,
+                "success": 32,
                 "past": null
             },
             "fouls": {
-                "drawn": 24,
-                "committed": 14
+                "drawn": 18,
+                "committed": 9
             },
             "cards": {
-                "yellow": 1,
+                "yellow": 2,
                 "yellowred": 0,
                 "red": 0
             },
@@ -469,48 +378,48 @@
         "height": "178 cm",
         "weight": "75 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/127769.png",
+        "photo": "https://media-3.api-sports.io/football/players/127769.png",
         "0": {
             "team": {
                 "id": 42,
                 "name": "Arsenal",
-                "logo": "https://media.api-sports.io/football/teams/42.png"
+                "logo": "https://media-2.api-sports.io/football/teams/42.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-1.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-2.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 26,
-                "lineups": 25,
-                "minutes": 2105,
+                "appearences": 27,
+                "lineups": 26,
+                "minutes": 2182,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.134615",
+                "rating": "7.137037",
                 "captain": false
             },
             "substitutes": {
                 "in": 1,
-                "out": 11,
+                "out": 12,
                 "bench": 1
             },
             "shots": {
-                "total": 43,
-                "on": 23
+                "total": 45,
+                "on": 25
             },
             "goals": {
-                "total": 11,
+                "total": 12,
                 "conceded": 0,
                 "assists": 2,
                 "saves": null
             },
             "passes": {
-                "total": 748,
-                "key": 42,
+                "total": 774,
+                "key": 43,
                 "accuracy": 23
             },
             "tackles": {
@@ -519,20 +428,202 @@
                 "interceptions": 8
             },
             "duels": {
-                "total": 264,
-                "won": 96
+                "total": 273,
+                "won": 100
             },
             "dribbles": {
-                "attempts": 78,
-                "success": 39,
+                "attempts": 80,
+                "success": 40,
                 "past": null
             },
             "fouls": {
-                "drawn": 28,
-                "committed": 30
+                "drawn": 30,
+                "committed": 31
             },
             "cards": {
                 "yellow": 3,
+                "yellowred": 0,
+                "red": 0
+            },
+            "penalty": {
+                "won": null,
+                "commited": null,
+                "scored": 0,
+                "missed": 0,
+                "saved": null
+            }
+        }
+    },
+    {
+        "id": 306,
+        "name": "Mohamed Salah",
+        "firstname": "Mohamed",
+        "lastname": "Salah Hamed Mahrous Ghaly",
+        "age": 31,
+        "birth": {
+            "date": "1992-06-15",
+            "place": "Mu\u1e25\u0101fa\u1e93at al Gharbiyya",
+            "country": "Egypt"
+        },
+        "nationality": "Egypt",
+        "height": "175 cm",
+        "weight": "71 kg",
+        "injured": false,
+        "photo": "https://media-2.api-sports.io/football/players/306.png",
+        "0": {
+            "team": {
+                "id": 40,
+                "name": "Liverpool",
+                "logo": "https://media-1.api-sports.io/football/teams/40.png"
+            },
+            "league": {
+                "id": 39,
+                "name": "Premier League",
+                "country": "England",
+                "logo": "https://media-1.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-3.api-sports.io/flags/gb.svg",
+                "season": 2022
+            },
+            "games": {
+                "appearences": 26,
+                "lineups": 26,
+                "minutes": 2319,
+                "number": null,
+                "position": "Attacker",
+                "rating": "7.042307",
+                "captain": false
+            },
+            "substitutes": {
+                "in": 0,
+                "out": 4,
+                "bench": 0
+            },
+            "shots": {
+                "total": 65,
+                "on": 33
+            },
+            "goals": {
+                "total": 11,
+                "conceded": 0,
+                "assists": 7,
+                "saves": null
+            },
+            "passes": {
+                "total": 682,
+                "key": 47,
+                "accuracy": 20
+            },
+            "tackles": {
+                "total": 13,
+                "blocks": null,
+                "interceptions": 4
+            },
+            "duels": {
+                "total": 214,
+                "won": 71
+            },
+            "dribbles": {
+                "attempts": 77,
+                "success": 29,
+                "past": null
+            },
+            "fouls": {
+                "drawn": 24,
+                "committed": 14
+            },
+            "cards": {
+                "yellow": 1,
+                "yellowred": 0,
+                "red": 0
+            },
+            "penalty": {
+                "won": null,
+                "commited": null,
+                "scored": 0,
+                "missed": 1,
+                "saved": null
+            }
+        }
+    },
+    {
+        "id": 2507,
+        "name": "M. Almir\u00f3n",
+        "firstname": "Miguel \u00c1ngel",
+        "lastname": "Almir\u00f3n Rejala",
+        "age": 29,
+        "birth": {
+            "date": "1994-02-10",
+            "place": "Asunci\u00f3n",
+            "country": "Paraguay"
+        },
+        "nationality": "Paraguay",
+        "height": "174 cm",
+        "weight": "63 kg",
+        "injured": false,
+        "photo": "https://media-3.api-sports.io/football/players/2507.png",
+        "0": {
+            "team": {
+                "id": 34,
+                "name": "Newcastle",
+                "logo": "https://media-2.api-sports.io/football/teams/34.png"
+            },
+            "league": {
+                "id": 39,
+                "name": "Premier League",
+                "country": "England",
+                "logo": "https://media-2.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
+                "season": 2022
+            },
+            "games": {
+                "appearences": 25,
+                "lineups": 24,
+                "minutes": 1995,
+                "number": null,
+                "position": "Midfielder",
+                "rating": "7.072000",
+                "captain": false
+            },
+            "substitutes": {
+                "in": 1,
+                "out": 19,
+                "bench": 1
+            },
+            "shots": {
+                "total": 32,
+                "on": 18
+            },
+            "goals": {
+                "total": 11,
+                "conceded": 0,
+                "assists": 1,
+                "saves": null
+            },
+            "passes": {
+                "total": 731,
+                "key": 18,
+                "accuracy": 24
+            },
+            "tackles": {
+                "total": 38,
+                "blocks": 2,
+                "interceptions": 7
+            },
+            "duels": {
+                "total": 171,
+                "won": 92
+            },
+            "dribbles": {
+                "attempts": 50,
+                "success": 22,
+                "past": null
+            },
+            "fouls": {
+                "drawn": 27,
+                "committed": 17
+            },
+            "cards": {
+                "yellow": 2,
                 "yellowred": 0,
                 "red": 0
             },
@@ -560,28 +651,28 @@
         "height": "189 cm",
         "weight": "89 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/2825.png",
+        "photo": "https://media-3.api-sports.io/football/players/2825.png",
         "0": {
             "team": {
                 "id": 36,
                 "name": "Fulham",
-                "logo": "https://media.api-sports.io/football/teams/36.png"
+                "logo": "https://media-1.api-sports.io/football/teams/36.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-1.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-2.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 19,
-                "lineups": 19,
-                "minutes": 1640,
+                "appearences": 21,
+                "lineups": 21,
+                "minutes": 1820,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.178947",
+                "rating": "7.142857",
                 "captain": false
             },
             "substitutes": {
@@ -590,8 +681,8 @@
                 "bench": 0
             },
             "shots": {
-                "total": 67,
-                "on": 30
+                "total": 69,
+                "on": 31
             },
             "goals": {
                 "total": 11,
@@ -600,30 +691,30 @@
                 "saves": null
             },
             "passes": {
-                "total": 390,
+                "total": 442,
                 "key": 15,
                 "accuracy": 12
             },
             "tackles": {
-                "total": 13,
-                "blocks": 4,
+                "total": 14,
+                "blocks": 5,
                 "interceptions": 3
             },
             "duels": {
-                "total": 327,
-                "won": 148
+                "total": 364,
+                "won": 165
             },
             "dribbles": {
-                "attempts": 38,
-                "success": 20,
+                "attempts": 43,
+                "success": 23,
                 "past": null
             },
             "fouls": {
-                "drawn": 31,
-                "committed": 29
+                "drawn": 35,
+                "committed": 31
             },
             "cards": {
-                "yellow": 5,
+                "yellow": 6,
                 "yellowred": 0,
                 "red": 0
             },
@@ -637,84 +728,84 @@
         }
     },
     {
-        "id": 2507,
-        "name": "M. Almir\u00f3n",
-        "firstname": "Miguel \u00c1ngel",
-        "lastname": "Almir\u00f3n Rejala",
-        "age": 29,
+        "id": 37127,
+        "name": "M. \u00d8degaard",
+        "firstname": "Martin",
+        "lastname": "\u00d8degaard",
+        "age": 25,
         "birth": {
-            "date": "1994-02-10",
-            "place": "Asunci\u00f3n",
-            "country": "Paraguay"
+            "date": "1998-12-17",
+            "place": "Drammen",
+            "country": "Norway"
         },
-        "nationality": "Paraguay",
-        "height": "174 cm",
-        "weight": "63 kg",
+        "nationality": "Norway",
+        "height": "178 cm",
+        "weight": "68 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/2507.png",
+        "photo": "https://media-2.api-sports.io/football/players/37127.png",
         "0": {
             "team": {
-                "id": 34,
-                "name": "Newcastle",
-                "logo": "https://media.api-sports.io/football/teams/34.png"
+                "id": 42,
+                "name": "Arsenal",
+                "logo": "https://media-1.api-sports.io/football/teams/42.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-2.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 24,
-                "lineups": 24,
-                "minutes": 1973,
+                "appearences": 26,
+                "lineups": 26,
+                "minutes": 2231,
                 "number": null,
                 "position": "Midfielder",
-                "rating": "7.062500",
+                "rating": "7.419230",
                 "captain": false
             },
             "substitutes": {
                 "in": 0,
-                "out": 19,
+                "out": 16,
                 "bench": 0
             },
             "shots": {
-                "total": 31,
-                "on": 17
+                "total": 42,
+                "on": 23
             },
             "goals": {
                 "total": 10,
                 "conceded": 0,
-                "assists": 1,
+                "assists": 6,
                 "saves": null
             },
             "passes": {
-                "total": 722,
-                "key": 17,
-                "accuracy": 25
+                "total": 1181,
+                "key": 61,
+                "accuracy": 38
             },
             "tackles": {
-                "total": 38,
+                "total": 25,
                 "blocks": 2,
-                "interceptions": 7
+                "interceptions": 4
             },
             "duels": {
-                "total": 169,
-                "won": 91
+                "total": 207,
+                "won": 88
             },
             "dribbles": {
-                "attempts": 50,
-                "success": 22,
+                "attempts": 52,
+                "success": 34,
                 "past": null
             },
             "fouls": {
-                "drawn": 27,
-                "committed": 16
+                "drawn": 19,
+                "committed": 24
             },
             "cards": {
-                "yellow": 2,
+                "yellow": 4,
                 "yellowred": 0,
                 "red": 0
             },
@@ -742,34 +833,34 @@
         "height": "182 cm",
         "weight": "77 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/935.png",
+        "photo": "https://media-3.api-sports.io/football/players/935.png",
         "0": {
             "team": {
                 "id": 63,
                 "name": "Leeds",
-                "logo": "https://media.api-sports.io/football/teams/63.png"
+                "logo": "https://media-2.api-sports.io/football/teams/63.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-2.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 18,
+                "appearences": 19,
                 "lineups": 17,
-                "minutes": 1307,
+                "minutes": 1331,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.011111",
+                "rating": "6.968421",
                 "captain": false
             },
             "substitutes": {
-                "in": 1,
+                "in": 2,
                 "out": 12,
-                "bench": 1
+                "bench": 2
             },
             "shots": {
                 "total": 37,
@@ -782,17 +873,17 @@
                 "saves": null
             },
             "passes": {
-                "total": 369,
+                "total": 373,
                 "key": 13,
                 "accuracy": 14
             },
             "tackles": {
                 "total": 10,
                 "blocks": 2,
-                "interceptions": 3
+                "interceptions": 4
             },
             "duels": {
-                "total": 124,
+                "total": 127,
                 "won": 39
             },
             "dribbles": {
@@ -802,7 +893,7 @@
             },
             "fouls": {
                 "drawn": 4,
-                "committed": 16
+                "committed": 17
             },
             "cards": {
                 "yellow": 3,
@@ -833,33 +924,33 @@
         "height": "178 cm",
         "weight": "72 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/1460.png",
+        "photo": "https://media-3.api-sports.io/football/players/1460.png",
         "0": {
             "team": {
                 "id": 42,
                 "name": "Arsenal",
-                "logo": "https://media.api-sports.io/football/teams/42.png"
+                "logo": "https://media-3.api-sports.io/football/teams/42.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-3.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 26,
-                "lineups": 26,
-                "minutes": 2251,
+                "appearences": 27,
+                "lineups": 27,
+                "minutes": 2323,
                 "number": null,
                 "position": "Midfielder",
-                "rating": "7.319230",
+                "rating": "7.303703",
                 "captain": false
             },
             "substitutes": {
                 "in": 0,
-                "out": 9,
+                "out": 10,
                 "bench": 0
             },
             "shots": {
@@ -873,27 +964,27 @@
                 "saves": null
             },
             "passes": {
-                "total": 890,
-                "key": 58,
+                "total": 923,
+                "key": 59,
                 "accuracy": 27
             },
             "tackles": {
-                "total": 36,
+                "total": 38,
                 "blocks": null,
                 "interceptions": 13
             },
             "duels": {
-                "total": 286,
-                "won": 128
+                "total": 300,
+                "won": 134
             },
             "dribbles": {
-                "attempts": 92,
-                "success": 41,
+                "attempts": 94,
+                "success": 42,
                 "past": null
             },
             "fouls": {
-                "drawn": 43,
-                "committed": 29
+                "drawn": 45,
+                "committed": 31
             },
             "cards": {
                 "yellow": 5,
@@ -904,97 +995,6 @@
                 "won": null,
                 "commited": null,
                 "scored": 2,
-                "missed": 0,
-                "saved": null
-            }
-        }
-    },
-    {
-        "id": 37127,
-        "name": "M. \u00d8degaard",
-        "firstname": "Martin",
-        "lastname": "\u00d8degaard",
-        "age": 25,
-        "birth": {
-            "date": "1998-12-17",
-            "place": "Drammen",
-            "country": "Norway"
-        },
-        "nationality": "Norway",
-        "height": "178 cm",
-        "weight": "68 kg",
-        "injured": false,
-        "photo": "https://media.api-sports.io/football/players/37127.png",
-        "0": {
-            "team": {
-                "id": 42,
-                "name": "Arsenal",
-                "logo": "https://media.api-sports.io/football/teams/42.png"
-            },
-            "league": {
-                "id": 39,
-                "name": "Premier League",
-                "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
-                "season": 2022
-            },
-            "games": {
-                "appearences": 25,
-                "lineups": 25,
-                "minutes": 2141,
-                "number": null,
-                "position": "Midfielder",
-                "rating": "7.408000",
-                "captain": false
-            },
-            "substitutes": {
-                "in": 0,
-                "out": 16,
-                "bench": 0
-            },
-            "shots": {
-                "total": 40,
-                "on": 22
-            },
-            "goals": {
-                "total": 9,
-                "conceded": 0,
-                "assists": 6,
-                "saves": null
-            },
-            "passes": {
-                "total": 1121,
-                "key": 59,
-                "accuracy": 37
-            },
-            "tackles": {
-                "total": 23,
-                "blocks": 2,
-                "interceptions": 4
-            },
-            "duels": {
-                "total": 197,
-                "won": 83
-            },
-            "dribbles": {
-                "attempts": 48,
-                "success": 32,
-                "past": null
-            },
-            "fouls": {
-                "drawn": 18,
-                "committed": 22
-            },
-            "cards": {
-                "yellow": 3,
-                "yellowred": 0,
-                "red": 0
-            },
-            "penalty": {
-                "won": null,
-                "commited": null,
-                "scored": 0,
                 "missed": 0,
                 "saved": null
             }
@@ -1015,38 +1015,38 @@
         "height": "175 cm",
         "weight": "73 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/18784.png",
+        "photo": "https://media-2.api-sports.io/football/players/18784.png",
         "0": {
             "team": {
                 "id": 46,
                 "name": "Leicester",
-                "logo": "https://media.api-sports.io/football/teams/46.png"
+                "logo": "https://media-3.api-sports.io/football/teams/46.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-1.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-2.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 18,
-                "lineups": 17,
-                "minutes": 1456,
+                "appearences": 19,
+                "lineups": 18,
+                "minutes": 1546,
                 "number": null,
                 "position": "Midfielder",
-                "rating": "7.438888",
+                "rating": "7.452631",
                 "captain": false
             },
             "substitutes": {
                 "in": 1,
-                "out": 4,
+                "out": 5,
                 "bench": 1
             },
             "shots": {
-                "total": 33,
-                "on": 16
+                "total": 36,
+                "on": 18
             },
             "goals": {
                 "total": 9,
@@ -1055,26 +1055,26 @@
                 "saves": null
             },
             "passes": {
-                "total": 658,
-                "key": 42,
-                "accuracy": 30
+                "total": 697,
+                "key": 45,
+                "accuracy": 29
             },
             "tackles": {
-                "total": 29,
+                "total": 30,
                 "blocks": null,
-                "interceptions": 10
+                "interceptions": 11
             },
             "duels": {
-                "total": 164,
-                "won": 87
+                "total": 175,
+                "won": 95
             },
             "dribbles": {
-                "attempts": 31,
-                "success": 14,
+                "attempts": 36,
+                "success": 17,
                 "past": null
             },
             "fouls": {
-                "drawn": 42,
+                "drawn": 46,
                 "committed": 19
             },
             "cards": {
@@ -1106,38 +1106,38 @@
         "height": "171 cm",
         "weight": "70 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/631.png",
+        "photo": "https://media-1.api-sports.io/football/players/631.png",
         "0": {
             "team": {
                 "id": 50,
                 "name": "Manchester City",
-                "logo": "https://media.api-sports.io/football/teams/50.png"
+                "logo": "https://media-1.api-sports.io/football/teams/50.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-1.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-2.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 23,
-                "lineups": 16,
-                "minutes": 1351,
+                "appearences": 24,
+                "lineups": 17,
+                "minutes": 1409,
                 "number": null,
                 "position": "Midfielder",
-                "rating": "7.208695",
+                "rating": "7.208333",
                 "captain": false
             },
             "substitutes": {
                 "in": 7,
-                "out": 9,
+                "out": 10,
                 "bench": 8
             },
             "shots": {
-                "total": 25,
-                "on": 18
+                "total": 26,
+                "on": 19
             },
             "goals": {
                 "total": 9,
@@ -1146,26 +1146,26 @@
                 "saves": null
             },
             "passes": {
-                "total": 734,
-                "key": 33,
-                "accuracy": 27
+                "total": 754,
+                "key": 34,
+                "accuracy": 26
             },
             "tackles": {
                 "total": 14,
                 "blocks": 1,
-                "interceptions": 3
+                "interceptions": 5
             },
             "duels": {
-                "total": 152,
-                "won": 72
+                "total": 160,
+                "won": 77
             },
             "dribbles": {
-                "attempts": 47,
-                "success": 23,
+                "attempts": 51,
+                "success": 26,
                 "past": null
             },
             "fouls": {
-                "drawn": 19,
+                "drawn": 21,
                 "committed": 7
             },
             "cards": {
@@ -1177,6 +1177,97 @@
                 "won": null,
                 "commited": null,
                 "scored": 0,
+                "missed": 0,
+                "saved": null
+            }
+        }
+    },
+    {
+        "id": 19366,
+        "name": "O. Watkins",
+        "firstname": "Oliver George Arthur",
+        "lastname": "Watkins",
+        "age": 28,
+        "birth": {
+            "date": "1995-12-30",
+            "place": "Torbay",
+            "country": "England"
+        },
+        "nationality": "England",
+        "height": "180 cm",
+        "weight": "70 kg",
+        "injured": false,
+        "photo": "https://media-2.api-sports.io/football/players/19366.png",
+        "0": {
+            "team": {
+                "id": 66,
+                "name": "Aston Villa",
+                "logo": "https://media-2.api-sports.io/football/teams/66.png"
+            },
+            "league": {
+                "id": 39,
+                "name": "Premier League",
+                "country": "England",
+                "logo": "https://media-3.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-3.api-sports.io/flags/gb.svg",
+                "season": 2022
+            },
+            "games": {
+                "appearences": 25,
+                "lineups": 24,
+                "minutes": 2059,
+                "number": null,
+                "position": "Attacker",
+                "rating": "6.756000",
+                "captain": false
+            },
+            "substitutes": {
+                "in": 1,
+                "out": 7,
+                "bench": 1
+            },
+            "shots": {
+                "total": 42,
+                "on": 30
+            },
+            "goals": {
+                "total": 9,
+                "conceded": 0,
+                "assists": 4,
+                "saves": null
+            },
+            "passes": {
+                "total": 391,
+                "key": 21,
+                "accuracy": 11
+            },
+            "tackles": {
+                "total": 14,
+                "blocks": 1,
+                "interceptions": 8
+            },
+            "duels": {
+                "total": 253,
+                "won": 98
+            },
+            "dribbles": {
+                "attempts": 34,
+                "success": 10,
+                "past": null
+            },
+            "fouls": {
+                "drawn": 26,
+                "committed": 16
+            },
+            "cards": {
+                "yellow": 1,
+                "yellowred": 0,
+                "red": 0
+            },
+            "penalty": {
+                "won": null,
+                "commited": null,
+                "scored": 1,
                 "missed": 0,
                 "saved": null
             }
@@ -1197,34 +1288,34 @@
         "height": "181 cm",
         "weight": "76 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/302.png",
+        "photo": "https://media-2.api-sports.io/football/players/302.png",
         "0": {
             "team": {
                 "id": 40,
                 "name": "Liverpool",
-                "logo": "https://media.api-sports.io/football/teams/40.png"
+                "logo": "https://media-1.api-sports.io/football/teams/40.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-2.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 18,
+                "appearences": 19,
                 "lineups": 11,
-                "minutes": 1007,
+                "minutes": 1031,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.200000",
+                "rating": "7.172222",
                 "captain": false
             },
             "substitutes": {
-                "in": 7,
+                "in": 8,
                 "out": 8,
-                "bench": 7
+                "bench": 8
             },
             "shots": {
                 "total": 27,
@@ -1237,18 +1328,18 @@
                 "saves": null
             },
             "passes": {
-                "total": 456,
+                "total": 472,
                 "key": 20,
                 "accuracy": 21
             },
             "tackles": {
-                "total": 14,
+                "total": 15,
                 "blocks": 1,
                 "interceptions": 6
             },
             "duels": {
-                "total": 116,
-                "won": 42
+                "total": 117,
+                "won": 43
             },
             "dribbles": {
                 "attempts": 19,
@@ -1288,38 +1379,38 @@
         "height": "187 cm",
         "weight": "81 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/51617.png",
+        "photo": "https://media-3.api-sports.io/football/players/51617.png",
         "0": {
             "team": {
                 "id": 40,
                 "name": "Liverpool",
-                "logo": "https://media.api-sports.io/football/teams/40.png"
+                "logo": "https://media-3.api-sports.io/football/teams/40.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-2.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 19,
-                "lineups": 15,
-                "minutes": 1288,
+                "appearences": 20,
+                "lineups": 16,
+                "minutes": 1354,
                 "number": null,
                 "position": "Attacker",
-                "rating": "7.044444",
+                "rating": "7.026315",
                 "captain": false
             },
             "substitutes": {
                 "in": 4,
-                "out": 9,
+                "out": 10,
                 "bench": 4
             },
             "shots": {
-                "total": 63,
-                "on": 32
+                "total": 64,
+                "on": 33
             },
             "goals": {
                 "total": 8,
@@ -1328,27 +1419,27 @@
                 "saves": null
             },
             "passes": {
-                "total": 265,
+                "total": 276,
                 "key": 23,
                 "accuracy": 9
             },
             "tackles": {
-                "total": 7,
+                "total": 8,
                 "blocks": null,
                 "interceptions": 3
             },
             "duels": {
-                "total": 148,
-                "won": 60
+                "total": 156,
+                "won": 63
             },
             "dribbles": {
-                "attempts": 25,
-                "success": 12,
+                "attempts": 26,
+                "success": 13,
                 "past": null
             },
             "fouls": {
                 "drawn": 13,
-                "committed": 18
+                "committed": 19
             },
             "cards": {
                 "yellow": 1,
@@ -1379,34 +1470,34 @@
         "height": "174 cm",
         "weight": "66 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/18778.png",
+        "photo": "https://media-1.api-sports.io/football/players/18778.png",
         "0": {
             "team": {
                 "id": 46,
                 "name": "Leicester",
-                "logo": "https://media.api-sports.io/football/teams/46.png"
+                "logo": "https://media-3.api-sports.io/football/teams/46.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-2.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 23,
+                "appearences": 24,
                 "lineups": 23,
-                "minutes": 1928,
+                "minutes": 1952,
                 "number": null,
                 "position": "Midfielder",
-                "rating": "6.534782",
+                "rating": "6.550000",
                 "captain": false
             },
             "substitutes": {
-                "in": 0,
+                "in": 1,
                 "out": 7,
-                "bench": 0
+                "bench": 1
             },
             "shots": {
                 "total": 37,
@@ -1419,8 +1510,8 @@
                 "saves": null
             },
             "passes": {
-                "total": 525,
-                "key": 13,
+                "total": 533,
+                "key": 14,
                 "accuracy": 16
             },
             "tackles": {
@@ -1429,8 +1520,8 @@
                 "interceptions": 6
             },
             "duels": {
-                "total": 242,
-                "won": 81
+                "total": 243,
+                "won": 82
             },
             "dribbles": {
                 "attempts": 55,
@@ -1456,97 +1547,6 @@
         }
     },
     {
-        "id": 19366,
-        "name": "O. Watkins",
-        "firstname": "Oliver George Arthur",
-        "lastname": "Watkins",
-        "age": 28,
-        "birth": {
-            "date": "1995-12-30",
-            "place": "Torbay",
-            "country": "England"
-        },
-        "nationality": "England",
-        "height": "180 cm",
-        "weight": "70 kg",
-        "injured": false,
-        "photo": "https://media.api-sports.io/football/players/19366.png",
-        "0": {
-            "team": {
-                "id": 66,
-                "name": "Aston Villa",
-                "logo": "https://media.api-sports.io/football/teams/66.png"
-            },
-            "league": {
-                "id": 39,
-                "name": "Premier League",
-                "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
-                "season": 2022
-            },
-            "games": {
-                "appearences": 24,
-                "lineups": 23,
-                "minutes": 1974,
-                "number": null,
-                "position": "Attacker",
-                "rating": "6.708333",
-                "captain": false
-            },
-            "substitutes": {
-                "in": 1,
-                "out": 6,
-                "bench": 1
-            },
-            "shots": {
-                "total": 39,
-                "on": 27
-            },
-            "goals": {
-                "total": 8,
-                "conceded": 0,
-                "assists": 4,
-                "saves": null
-            },
-            "passes": {
-                "total": 374,
-                "key": 20,
-                "accuracy": 11
-            },
-            "tackles": {
-                "total": 13,
-                "blocks": null,
-                "interceptions": 8
-            },
-            "duels": {
-                "total": 243,
-                "won": 92
-            },
-            "dribbles": {
-                "attempts": 32,
-                "success": 10,
-                "past": null
-            },
-            "fouls": {
-                "drawn": 25,
-                "committed": 16
-            },
-            "cards": {
-                "yellow": 1,
-                "yellowred": 0,
-                "red": 0
-            },
-            "penalty": {
-                "won": null,
-                "commited": null,
-                "scored": 1,
-                "missed": 0,
-                "saved": null
-            }
-        }
-    },
-    {
         "id": 1946,
         "name": "L. Trossard",
         "firstname": "Leandro",
@@ -1561,19 +1561,19 @@
         "height": "172 cm",
         "weight": "61 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/1946.png",
+        "photo": "https://media-1.api-sports.io/football/players/1946.png",
         "0": {
             "team": {
                 "id": 51,
                 "name": "Brighton",
-                "logo": "https://media.api-sports.io/football/teams/51.png"
+                "logo": "https://media-2.api-sports.io/football/teams/51.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-1.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
@@ -1582,7 +1582,7 @@
                 "minutes": 1326,
                 "number": null,
                 "position": "Attacker",
-                "rating": "6.937500",
+                "rating": "7.155555",
                 "captain": false
             },
             "substitutes": {
@@ -1591,37 +1591,37 @@
                 "bench": 1
             },
             "shots": {
-                "total": 5,
-                "on": 2
+                "total": 7,
+                "on": 3
             },
             "goals": {
                 "total": 7,
                 "conceded": 0,
-                "assists": 2,
+                "assists": 5,
                 "saves": null
             },
             "passes": {
-                "total": 132,
-                "key": 5,
-                "accuracy": 13
+                "total": 166,
+                "key": 9,
+                "accuracy": 15
             },
             "tackles": {
-                "total": 6,
+                "total": 7,
                 "blocks": null,
-                "interceptions": 1
+                "interceptions": 2
             },
             "duels": {
-                "total": 43,
-                "won": 22
+                "total": 48,
+                "won": 24
             },
             "dribbles": {
-                "attempts": 11,
-                "success": 9,
+                "attempts": 12,
+                "success": 10,
                 "past": null
             },
             "fouls": {
                 "drawn": 7,
-                "committed": 5
+                "committed": 6
             },
             "cards": {
                 "yellow": 1,
@@ -1652,34 +1652,34 @@
         "height": "180 cm",
         "weight": "66 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/2939.png",
+        "photo": "https://media-3.api-sports.io/football/players/2939.png",
         "0": {
             "team": {
                 "id": 34,
                 "name": "Newcastle",
-                "logo": "https://media.api-sports.io/football/teams/34.png"
+                "logo": "https://media-3.api-sports.io/football/teams/34.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-3.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-3.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 18,
+                "appearences": 19,
                 "lineups": 15,
-                "minutes": 1226,
+                "minutes": 1248,
                 "number": null,
                 "position": "Attacker",
-                "rating": "6.833333",
+                "rating": "6.805263",
                 "captain": false
             },
             "substitutes": {
-                "in": 3,
+                "in": 4,
                 "out": 14,
-                "bench": 3
+                "bench": 4
             },
             "shots": {
                 "total": 37,
@@ -1692,9 +1692,9 @@
                 "saves": null
             },
             "passes": {
-                "total": 151,
+                "total": 155,
                 "key": 14,
-                "accuracy": 6
+                "accuracy": 5
             },
             "tackles": {
                 "total": 7,
@@ -1702,17 +1702,17 @@
                 "interceptions": 1
             },
             "duels": {
-                "total": 115,
-                "won": 43
+                "total": 119,
+                "won": 44
             },
             "dribbles": {
-                "attempts": 9,
+                "attempts": 10,
                 "success": 4,
                 "past": null
             },
             "fouls": {
-                "drawn": 18,
-                "committed": 15
+                "drawn": 19,
+                "committed": 16
             },
             "cards": {
                 "yellow": 3,
@@ -1743,38 +1743,38 @@
         "height": "179 cm",
         "weight": "73 kg",
         "injured": false,
-        "photo": "https://media.api-sports.io/football/players/129711.png",
+        "photo": "https://media-1.api-sports.io/football/players/129711.png",
         "0": {
             "team": {
                 "id": 65,
                 "name": "Nottingham Forest",
-                "logo": "https://media.api-sports.io/football/teams/65.png"
+                "logo": "https://media-2.api-sports.io/football/teams/65.png"
             },
             "league": {
                 "id": 39,
                 "name": "Premier League",
                 "country": "England",
-                "logo": "https://media.api-sports.io/football/leagues/39.png",
-                "flag": "https://media.api-sports.io/flags/gb.svg",
+                "logo": "https://media-1.api-sports.io/football/leagues/39.png",
+                "flag": "https://media-1.api-sports.io/flags/gb.svg",
                 "season": 2022
             },
             "games": {
-                "appearences": 25,
-                "lineups": 23,
-                "minutes": 2067,
+                "appearences": 26,
+                "lineups": 24,
+                "minutes": 2134,
                 "number": null,
                 "position": "Attacker",
-                "rating": "6.808000",
+                "rating": "6.803846",
                 "captain": false
             },
             "substitutes": {
                 "in": 2,
-                "out": 8,
+                "out": 9,
                 "bench": 2
             },
             "shots": {
-                "total": 33,
-                "on": 20
+                "total": 34,
+                "on": 21
             },
             "goals": {
                 "total": 7,
@@ -1783,8 +1783,8 @@
                 "saves": null
             },
             "passes": {
-                "total": 313,
-                "key": 21,
+                "total": 326,
+                "key": 22,
                 "accuracy": 7
             },
             "tackles": {
@@ -1793,12 +1793,12 @@
                 "interceptions": 3
             },
             "duels": {
-                "total": 188,
-                "won": 72
+                "total": 196,
+                "won": 75
             },
             "dribbles": {
-                "attempts": 48,
-                "success": 23,
+                "attempts": 53,
+                "success": 26,
                 "past": null
             },
             "fouls": {

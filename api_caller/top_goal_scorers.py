@@ -95,7 +95,7 @@ league_id                       =       os.getenv("LEAGUE_ID")
 season                          =       os.getenv("SEASON")
 
 local_target_path               =       os.path.abspath('api_caller/temp_storage/top_goal_scorers/dirty_data')
-match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01', '2023-03-08']
+match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01', '2023-03-08', '2023-03-18']
 headers                         =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
 query_string                    =       {'league': league_id, 'season': season}
 
@@ -116,90 +116,95 @@ try:
     response                        =       requests.request("GET", top_goal_scorers_url, headers=headers, params=query_string)
     # root_logger.debug(response.text)
 
-    # Display the response in a readable JSON format
-    root_logger.info(f'>>>>   Requests completed, now processing JSON payload ...')
-    root_logger.debug(f'>>>>   ')
-    response_json = json.dumps(response.json(), indent=4)
-    # root_logger.debug(response_json)
 
+    # Check the status code of the response
+    if response.status_code == 200:
 
-    # Read JSON payload into data frame 
-    root_logger.info(f'>>>>   Reading JSON payload into data frame ...')
-    root_logger.debug(f'>>>>   ')
-    
-    players                     =   []
-    statistics                  =   []
-
-    player_loop_counter         =   0
-    statistics_loop_counter     =   0
-
-
-
-    for index in range(20):
-
-        player_loop_counter += 1
-        player_details = response.json()['response'][index]['player']
-        players.append(player_details)
-        root_logger.debug(f"Player count: {player_loop_counter} ")
-
-        statistics_loop_counter += 1
-        player_statistics = response.json()['response'][index]['statistics']
-        statistics.append(player_statistics)
-        root_logger.debug(f"Statistics count: {statistics_loop_counter} ")
-
-    player_details_df = pd.DataFrame(players)
-    player_statistics_df = pd.DataFrame(statistics)
-
-
-    top_goal_scorers_df = pd.concat([player_details_df, player_statistics_df], axis=1)
-
-    print('------------')
-    print('')
-    print(top_goal_scorers_df)
-    print('')
-    print('------------')
-
-    # Write data frame to JSON file
-    root_logger.info(f'>>>>   Writing data frame to JSON file ...')
-    # root_logger.info(f'>>>>   Writing data frame to CSV file ...')
-    root_logger.debug(f'>>>>   ')
-
-
-
-
-    if WRITE_TO_CLOUD:
-        top_goal_scorers_df.to_csv(CSV_BUFFER , index=False)
-        RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
-
-        # Load Postgres table to S3
-        s3_client.put_object(Bucket=S3_BUCKET,
-                    Key=S3_KEY,
-                    Body=RAW_TABLE_ROWS_AS_STRING_VALUES
-                    )
-        root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
+        # Display the response in a readable JSON format
+        root_logger.info(f'>>>>   Requests completed, now processing JSON payload ...')
         root_logger.debug(f'>>>>   ')
-        root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
-        root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
-        root_logger.debug(f' ')
-    
-    else:
-        # top_goal_scorers_df.to_csv(f'' , index=False)
-        # top_goal_scorers_df.to_csv(f'{local_target_path}/{top_goal_scorers_file}', index=False, encoding='utf-8')
-        top_goal_scorers_str = top_goal_scorers_df.to_json(orient="records")
-        top_goal_scorers_dict = json.loads(top_goal_scorers_str)
-
-        with open(f'{local_target_path}/{top_goal_scorers_file}', 'w') as f:
-            json.dump(top_goal_scorers_dict, f, indent=4)
+        response_json = json.dumps(response.json(), indent=4)
+        # root_logger.debug(response_json)
 
 
-        root_logger.info("")
-        root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to local target location...')
+        # Read JSON payload into data frame 
+        root_logger.info(f'>>>>   Reading JSON payload into data frame ...')
+        root_logger.debug(f'>>>>   ')
+        
+        players                     =   []
+        statistics                  =   []
+
+        player_loop_counter         =   0
+        statistics_loop_counter     =   0
+
+
+
+        for index in range(20):
+
+            player_loop_counter += 1
+            player_details = response.json()['response'][index]['player']
+            players.append(player_details)
+            root_logger.debug(f"Player count:       {player_loop_counter} ")
+
+            statistics_loop_counter += 1
+            player_statistics = response.json()['response'][index]['statistics']
+            statistics.append(player_statistics)
+            root_logger.debug(f"Statistics count:   {statistics_loop_counter} ")
+            root_logger.debug(f"")
+
+        player_details_df = pd.DataFrame(players)
+        player_statistics_df = pd.DataFrame(statistics)
+
+
+        top_goal_scorers_df = pd.concat([player_details_df, player_statistics_df], axis=1)
+
+        print('------------')
+        print('')
+        print(top_goal_scorers_df)
+        print('')
+        print('------------')
+
+        # Write data frame to JSON file
+        root_logger.info(f'>>>>   Writing data frame to JSON file ...')
+        # root_logger.info(f'>>>>   Writing data frame to CSV file ...')
         root_logger.debug(f'>>>>   ')
 
 
 
-    # Add delays to avoid overloading the website's servers 
-    sleep(3)
+
+        if WRITE_TO_CLOUD:
+            top_goal_scorers_df.to_csv(CSV_BUFFER , index=False)
+            RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
+
+            # Load Postgres table to S3
+            s3_client.put_object(Bucket=S3_BUCKET,
+                        Key=S3_KEY,
+                        Body=RAW_TABLE_ROWS_AS_STRING_VALUES
+                        )
+            root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
+            root_logger.debug(f'>>>>   ')
+            root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+            root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+            root_logger.debug(f' ')
+        
+        else:
+            # top_goal_scorers_df.to_csv(f'' , index=False)
+            # top_goal_scorers_df.to_csv(f'{local_target_path}/{top_goal_scorers_file}', index=False, encoding='utf-8')
+            top_goal_scorers_str = top_goal_scorers_df.to_json(orient="records")
+            top_goal_scorers_dict = json.loads(top_goal_scorers_str)
+
+            with open(f'{local_target_path}/{top_goal_scorers_file}', 'w') as f:
+                json.dump(top_goal_scorers_dict, f, indent=4)
+
+
+            root_logger.info("")
+            root_logger.info(f'>>>>   Successfully written and loaded "{top_goal_scorers_file}" file to local target location...')
+            root_logger.debug(f'>>>>   ')
+
+
+
+        # Add delays to avoid overloading the website's servers 
+        sleep(3)
 
 except Exception as e:
     root_logger.error(e)
