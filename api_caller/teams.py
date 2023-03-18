@@ -96,7 +96,7 @@ season                          =       os.getenv("SEASON")
 team_id                         =       os.getenv("TEAM_ID")
 # local_target_path               =       os.path.abspath('api_caller/temp_storage/teams/dirty_data')
 local_target_path               =       os.path.abspath('api_caller/temp_storage/teams/dirty_data')
-match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01', '2023-03-08']
+match_dates                     =       ['2022-09-01', '2022-10-01', '2022-11-01', '2022-12-01', '2023-01-01', '2023-02-01', '2023-03-01', '2023-03-08', '2023-03-16']
 headers                         =       {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST}
 query_string                    =       {'league': league_id, 'season': season, 'team': team_id}
 
@@ -117,54 +117,57 @@ for match_date in match_dates:
         root_logger.debug(f'>>>>   ')
         response                        =       requests.request("GET", teams_url, headers=headers, params=query_string)
 
-        # Display the response in a readable JSON format
-        root_logger.info(f'>>>>   Requests completed, now processing JSON payload ...')
-        root_logger.debug(f'>>>>   ')
-        response_json = json.dumps(response.json(), indent=4)
+        # Check the status code of the response 
+        if response.status_code == 200:
 
-
-        # Read JSON payload into data frame 
-        root_logger.info(f'>>>>   Reading JSON payload into data frame ...')
-        root_logger.debug(f'>>>>   ')
-        fixtures = response.json()['response']['fixtures']
-        df = pd.json_normalize(fixtures)
-        df['match_date'] = match_date
-        print(df)
-
-
-        # Write data frame to CSV file
-        root_logger.info(f'>>>>   Writing data frame to CSV file ...')
-        root_logger.debug(f'>>>>   ')
-
-
-
-
-        if WRITE_TO_CLOUD:
-            df.to_csv(CSV_BUFFER , index=False)
-            RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
-
-            # Load Postgres table to S3
-            s3_client.put_object(Bucket=S3_BUCKET,
-                        Key=S3_KEY,
-                        Body=RAW_TABLE_ROWS_AS_STRING_VALUES
-                        )
-            root_logger.info(f'>>>>   Successfully written and loaded "{team_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
+            # Display the response in a readable JSON format
+            root_logger.info(f'>>>>   Requests completed, now processing JSON payload ...')
             root_logger.debug(f'>>>>   ')
-            root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
-            root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
-            root_logger.debug(f' ')
-        
-        else:
-            # df.to_csv(f'' , index=False)
-            df.to_csv(f'{local_target_path}/{team_file}', index=False)
-            root_logger.info("")
-            root_logger.info(f'>>>>   Successfully written and loaded "{df}" file to local target location...')
+            response_json = json.dumps(response.json(), indent=4)
+
+
+            # Read JSON payload into data frame 
+            root_logger.info(f'>>>>   Reading JSON payload into data frame ...')
+            root_logger.debug(f'>>>>   ')
+            fixtures = response.json()['response']['fixtures']
+            df = pd.json_normalize(fixtures)
+            df['match_date'] = match_date
+            print(df)
+
+
+            # Write data frame to CSV file
+            root_logger.info(f'>>>>   Writing data frame to CSV file ...')
             root_logger.debug(f'>>>>   ')
 
 
 
-        # Add delays to avoid overloading the website's servers 
-        sleep(3)
+
+            if WRITE_TO_CLOUD:
+                df.to_csv(CSV_BUFFER , index=False)
+                RAW_TABLE_ROWS_AS_STRING_VALUES              =       CSV_BUFFER.getvalue()
+
+                # Load Postgres table to S3
+                s3_client.put_object(Bucket=S3_BUCKET,
+                            Key=S3_KEY,
+                            Body=RAW_TABLE_ROWS_AS_STRING_VALUES
+                            )
+                root_logger.info(f'>>>>   Successfully written and loaded "{team_file}" file to the "{S3_BUCKET}" S3 bucket target location...')
+                root_logger.debug(f'>>>>   ')
+                root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+                root_logger.debug(f'------------------------------------------------------------------------------------------------- ')
+                root_logger.debug(f' ')
+            
+            else:
+                # df.to_csv(f'' , index=False)
+                df.to_csv(f'{local_target_path}/{team_file}', index=False)
+                root_logger.info("")
+                root_logger.info(f'>>>>   Successfully written and loaded "{df}" file to local target location...')
+                root_logger.debug(f'>>>>   ')
+
+
+
+            # Add delays to avoid overloading the website's servers 
+            sleep(3)
 
     except Exception as e:
         root_logger.error(e)

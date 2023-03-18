@@ -1,52 +1,71 @@
-2023-03-08 21:23:51,687  |  INFO  |  >>>>   Sending HTTP GET requests to API endpoint for latest top_assists in the Premier League ...  
-2023-03-08 21:23:51,688  |  DEBUG  |  >>>>     
-2023-03-08 21:23:52,249  |  INFO  |  >>>>   Requests completed, now processing JSON payload ...  
-2023-03-08 21:23:52,250  |  DEBUG  |  >>>>     
-2023-03-08 21:23:52,254  |  INFO  |  >>>>   Reading JSON payload into data frame ...  
-2023-03-08 21:23:52,254  |  DEBUG  |  >>>>     
-2023-03-08 21:23:52,256  |  DEBUG  |  Player count: 1   
-2023-03-08 21:23:52,258  |  DEBUG  |  Statistics count: 1   
-2023-03-08 21:23:52,260  |  DEBUG  |  Player count: 2   
-2023-03-08 21:23:52,261  |  DEBUG  |  Statistics count: 2   
-2023-03-08 21:23:52,262  |  DEBUG  |  Player count: 3   
-2023-03-08 21:23:52,263  |  DEBUG  |  Statistics count: 3   
-2023-03-08 21:23:52,265  |  DEBUG  |  Player count: 4   
-2023-03-08 21:23:52,267  |  DEBUG  |  Statistics count: 4   
-2023-03-08 21:23:52,269  |  DEBUG  |  Player count: 5   
-2023-03-08 21:23:52,270  |  DEBUG  |  Statistics count: 5   
-2023-03-08 21:23:52,270  |  DEBUG  |  Player count: 6   
-2023-03-08 21:23:52,271  |  DEBUG  |  Statistics count: 6   
-2023-03-08 21:23:52,273  |  DEBUG  |  Player count: 7   
-2023-03-08 21:23:52,274  |  DEBUG  |  Statistics count: 7   
-2023-03-08 21:23:52,276  |  DEBUG  |  Player count: 8   
-2023-03-08 21:23:52,278  |  DEBUG  |  Statistics count: 8   
-2023-03-08 21:23:52,278  |  DEBUG  |  Player count: 9   
-2023-03-08 21:23:52,281  |  DEBUG  |  Statistics count: 9   
-2023-03-08 21:23:52,282  |  DEBUG  |  Player count: 10   
-2023-03-08 21:23:52,284  |  DEBUG  |  Statistics count: 10   
-2023-03-08 21:23:52,285  |  DEBUG  |  Player count: 11   
-2023-03-08 21:23:52,286  |  DEBUG  |  Statistics count: 11   
-2023-03-08 21:23:52,287  |  DEBUG  |  Player count: 12   
-2023-03-08 21:23:52,289  |  DEBUG  |  Statistics count: 12   
-2023-03-08 21:23:52,291  |  DEBUG  |  Player count: 13   
-2023-03-08 21:23:52,292  |  DEBUG  |  Statistics count: 13   
-2023-03-08 21:23:52,294  |  DEBUG  |  Player count: 14   
-2023-03-08 21:23:52,295  |  DEBUG  |  Statistics count: 14   
-2023-03-08 21:23:52,296  |  DEBUG  |  Player count: 15   
-2023-03-08 21:23:52,297  |  DEBUG  |  Statistics count: 15   
-2023-03-08 21:23:52,299  |  DEBUG  |  Player count: 16   
-2023-03-08 21:23:52,300  |  DEBUG  |  Statistics count: 16   
-2023-03-08 21:23:52,300  |  DEBUG  |  Player count: 17   
-2023-03-08 21:23:52,301  |  DEBUG  |  Statistics count: 17   
-2023-03-08 21:23:52,302  |  DEBUG  |  Player count: 18   
-2023-03-08 21:23:52,303  |  DEBUG  |  Statistics count: 18   
-2023-03-08 21:23:52,304  |  DEBUG  |  Player count: 19   
-2023-03-08 21:23:52,305  |  DEBUG  |  Statistics count: 19   
-2023-03-08 21:23:52,307  |  DEBUG  |  Player count: 20   
-2023-03-08 21:23:52,308  |  DEBUG  |  Statistics count: 20   
-2023-03-08 21:23:52,443  |  INFO  |  >>>>   Writing data frame to JSON file ...  
-2023-03-08 21:23:52,443  |  INFO  |  >>>>   Writing data frame to CSV file ...  
-2023-03-08 21:23:52,444  |  DEBUG  |  >>>>     
-2023-03-08 21:23:52,455  |  INFO  |    
-2023-03-08 21:23:52,457  |  INFO  |  >>>>   Successfully written and loaded "top_assists.json" file to local target location...  
-2023-03-08 21:23:52,458  |  DEBUG  |  >>>>     
+2023-03-18 13:56:23,139  |  INFO  |  >>>>   Sending HTTP GET requests to API endpoint for latest top_assists in the Premier League ...  
+2023-03-18 13:56:23,140  |  DEBUG  |  >>>>     
+2023-03-18 13:56:23,585  |  INFO  |  >>>>   Requests completed, now processing JSON payload ...  
+2023-03-18 13:56:23,585  |  DEBUG  |  >>>>     
+2023-03-18 13:56:23,590  |  INFO  |  >>>>   Reading JSON payload into data frame ...  
+2023-03-18 13:56:23,591  |  DEBUG  |  >>>>     
+2023-03-18 13:56:23,592  |  DEBUG  |  Player count:       1   
+2023-03-18 13:56:23,593  |  DEBUG  |  Statistics count:   1   
+2023-03-18 13:56:23,593  |  DEBUG  |    
+2023-03-18 13:56:23,594  |  DEBUG  |  Player count:       2   
+2023-03-18 13:56:23,595  |  DEBUG  |  Statistics count:   2   
+2023-03-18 13:56:23,595  |  DEBUG  |    
+2023-03-18 13:56:23,597  |  DEBUG  |  Player count:       3   
+2023-03-18 13:56:23,598  |  DEBUG  |  Statistics count:   3   
+2023-03-18 13:56:23,598  |  DEBUG  |    
+2023-03-18 13:56:23,599  |  DEBUG  |  Player count:       4   
+2023-03-18 13:56:23,600  |  DEBUG  |  Statistics count:   4   
+2023-03-18 13:56:23,601  |  DEBUG  |    
+2023-03-18 13:56:23,601  |  DEBUG  |  Player count:       5   
+2023-03-18 13:56:23,603  |  DEBUG  |  Statistics count:   5   
+2023-03-18 13:56:23,604  |  DEBUG  |    
+2023-03-18 13:56:23,604  |  DEBUG  |  Player count:       6   
+2023-03-18 13:56:23,605  |  DEBUG  |  Statistics count:   6   
+2023-03-18 13:56:23,605  |  DEBUG  |    
+2023-03-18 13:56:23,606  |  DEBUG  |  Player count:       7   
+2023-03-18 13:56:23,607  |  DEBUG  |  Statistics count:   7   
+2023-03-18 13:56:23,607  |  DEBUG  |    
+2023-03-18 13:56:23,609  |  DEBUG  |  Player count:       8   
+2023-03-18 13:56:23,610  |  DEBUG  |  Statistics count:   8   
+2023-03-18 13:56:23,610  |  DEBUG  |    
+2023-03-18 13:56:23,611  |  DEBUG  |  Player count:       9   
+2023-03-18 13:56:23,612  |  DEBUG  |  Statistics count:   9   
+2023-03-18 13:56:23,612  |  DEBUG  |    
+2023-03-18 13:56:23,614  |  DEBUG  |  Player count:       10   
+2023-03-18 13:56:23,615  |  DEBUG  |  Statistics count:   10   
+2023-03-18 13:56:23,615  |  DEBUG  |    
+2023-03-18 13:56:23,616  |  DEBUG  |  Player count:       11   
+2023-03-18 13:56:23,616  |  DEBUG  |  Statistics count:   11   
+2023-03-18 13:56:23,617  |  DEBUG  |    
+2023-03-18 13:56:23,617  |  DEBUG  |  Player count:       12   
+2023-03-18 13:56:23,619  |  DEBUG  |  Statistics count:   12   
+2023-03-18 13:56:23,619  |  DEBUG  |    
+2023-03-18 13:56:23,620  |  DEBUG  |  Player count:       13   
+2023-03-18 13:56:23,621  |  DEBUG  |  Statistics count:   13   
+2023-03-18 13:56:23,622  |  DEBUG  |    
+2023-03-18 13:56:23,622  |  DEBUG  |  Player count:       14   
+2023-03-18 13:56:23,624  |  DEBUG  |  Statistics count:   14   
+2023-03-18 13:56:23,624  |  DEBUG  |    
+2023-03-18 13:56:23,626  |  DEBUG  |  Player count:       15   
+2023-03-18 13:56:23,627  |  DEBUG  |  Statistics count:   15   
+2023-03-18 13:56:23,627  |  DEBUG  |    
+2023-03-18 13:56:23,628  |  DEBUG  |  Player count:       16   
+2023-03-18 13:56:23,629  |  DEBUG  |  Statistics count:   16   
+2023-03-18 13:56:23,630  |  DEBUG  |    
+2023-03-18 13:56:23,631  |  DEBUG  |  Player count:       17   
+2023-03-18 13:56:23,632  |  DEBUG  |  Statistics count:   17   
+2023-03-18 13:56:23,632  |  DEBUG  |    
+2023-03-18 13:56:23,633  |  DEBUG  |  Player count:       18   
+2023-03-18 13:56:23,634  |  DEBUG  |  Statistics count:   18   
+2023-03-18 13:56:23,635  |  DEBUG  |    
+2023-03-18 13:56:23,636  |  DEBUG  |  Player count:       19   
+2023-03-18 13:56:23,637  |  DEBUG  |  Statistics count:   19   
+2023-03-18 13:56:23,637  |  DEBUG  |    
+2023-03-18 13:56:23,638  |  DEBUG  |  Player count:       20   
+2023-03-18 13:56:23,638  |  DEBUG  |  Statistics count:   20   
+2023-03-18 13:56:23,640  |  DEBUG  |    
+2023-03-18 13:56:23,750  |  INFO  |  >>>>   Writing data frame to JSON file ...  
+2023-03-18 13:56:23,750  |  DEBUG  |  >>>>     
+2023-03-18 13:56:23,761  |  INFO  |    
+2023-03-18 13:56:23,762  |  INFO  |  >>>>   Successfully written and loaded "top_assists.json" file to local target location...  
+2023-03-18 13:56:23,762  |  DEBUG  |  >>>>     
