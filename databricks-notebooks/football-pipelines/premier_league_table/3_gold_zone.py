@@ -275,34 +275,7 @@ def create_teams_with_most_wins_table(df):
         df.createOrReplaceTempView("teams_with_most_wins_tbl_sql")
 
         df = spark.sql("""
-                            SELECT DISTINCT     ranking
-                                                , team
-                                                , matches_played
-                                                , wins
-                                                , draws
-                                                , losses
-                                                , goals_for
-                                                , goals_against
-                                                , goal_difference
-                                                , points 
-                        FROM (
-                                SELECT ranking
-                                       , team
-                                       , matches_played
-                                       , wins
-                                       , draws
-                                       , losses
-                                       , goals_for
-                                       , goals_against
-                                       , goal_difference
-                                       , points 
-                                       , RANK() OVER (PARTITION BY team 
-                                                           ORDER BY matches_played 
-                                                                 DESC) as rank 
-                                 FROM gold_df_sql
-                        )
-                        WHERE      rank = 1
-                        ORDER BY   ranking ASC
+                            SELECT * FROM FROM gold_df_sql
 
         """)
         df.write.format("delta").mode("overwrite").save(teams_with_most_wins_table_gold)
@@ -323,7 +296,7 @@ def plot_teams_with_most_wins_table(df):
         # Use the Premier League temp view 
         df = spark.sql("""
 
-            SELECT DISTINCT * FROM premier_league_tbl_sql    
+            SELECT * FROM premier_league_tbl_sql    
 
         """)
 

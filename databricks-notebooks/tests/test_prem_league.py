@@ -11,7 +11,7 @@ spark = SparkSession.builder.appName("test-premier-league-table-app").getOrCreat
 
 # Create constants for tests 
 database_name = "football_db"
-table_name = "gold_tbl"
+table_name = "silver_tbl_2"
 premier_league_table = spark.read.table(f"{database_name}.{table_name}")
 
 

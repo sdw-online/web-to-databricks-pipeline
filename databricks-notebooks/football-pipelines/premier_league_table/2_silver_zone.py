@@ -433,6 +433,20 @@ dbutils.notebook.exit("stop")
 
 # MAGIC %md
 # MAGIC 
+# MAGIC ### Analyze the silver streaming results
+
+# COMMAND ----------
+
+# MAGIC %sql 
+# MAGIC 
+# MAGIC DESCRIBE HISTORY football_db.silver_tbl_1
+# MAGIC 
+# MAGIC -- select * from football_db.bronze_tbl version as of 1
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
 # MAGIC ### Display the data profiling metrics for silver zone outputs
 
 # COMMAND ----------
@@ -482,32 +496,45 @@ render_silver_query_metrics(silver_streaming_df_2)
 
 # MAGIC %md
 # MAGIC 
-# MAGIC ### Analyze the silver streaming results
-
-# COMMAND ----------
-
-# MAGIC %sql 
-# MAGIC 
-# MAGIC DESCRIBE HISTORY football_db.silver_tbl_1
-# MAGIC 
-# MAGIC -- select * from football_db.bronze_tbl version as of 1
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
 # MAGIC ### Create 2nd silver table in Hive metastore + Drop duplicates form previous append operations
 
 # COMMAND ----------
 
 def create_2nd_stage_silver_tbl():
+    silver_tbl_stage_1 = 'football_db.silver_tbl_1'
     silver_tbl_stage_2 = 'football_db.silver_tbl_2'
     spark.sql(f""" DROP TABLE IF EXISTS {silver_tbl_stage_2}; """)
     if not spark.catalog.tableExists(silver_tbl_stage_2):
         
         spark.sql(f""" CREATE TABLE IF NOT EXISTS football_db.silver_tbl_2 as 
-                          SELECT DISTINCT * 
-                          FROM football_db.silver_tbl_1
+                          SELECT DISTINCT     ranking
+                                            , team
+                                            , matches_played
+                                            , wins
+                                            , draws
+                                            , losses
+                                            , goals_for
+                                            , goals_against
+                                            , goal_difference
+                                            , points 
+                        FROM (
+                                SELECT ranking
+                                       , team
+                                       , matches_played
+                                       , wins
+                                       , draws
+                                       , losses
+                                       , goals_for
+                                       , goals_against
+                                       , goal_difference
+                                       , points 
+                                       , RANK() OVER (PARTITION BY team 
+                                                           ORDER BY matches_played 
+                                                                 DESC) as rank 
+                                 FROM {silver_tbl_stage_1}
+                        )
+                        WHERE      rank = 1
+                        ORDER BY   ranking ASC
                           ;  
 """)
         print(f"Successfully created '{silver_tbl_stage_2}' table . ")
